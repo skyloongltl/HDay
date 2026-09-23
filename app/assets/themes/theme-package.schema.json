@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fitness-counter.local/theme-package.schema.json",
+  "title": "Fitness Counter data-only theme package",
+  "type": "object",
+  "required": ["manifest", "tokens", "skins"],
+  "additionalProperties": false,
+  "x-forbiddenFields": ["script", "executable"],
+  "properties": {
+    "manifest": {
+      "type": "object",
+      "required": ["id", "name", "schemaVersion", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "schemaVersion": {"type": "integer", "const": 1},
+        "version": {"type": "string", "minLength": 1}
+      }
+    },
+    "tokens": {
+      "type": "object",
+      "additionalProperties": {"type": ["string", "number"]},
+      "required": [
+        "colors.fogBg", "colors.deepBlue", "colors.deepBlueProgressTrack",
+        "colors.coral", "colors.coralSurface", "colors.coralBorder",
+        "colors.mint", "colors.mintSurface", "colors.mintText",
+        "colors.text", "colors.textMuted", "colors.textSubtle",
+        "colors.onDeep", "colors.onDeepMuted", "colors.white",
+        "colors.border", "colors.borderStrong", "colors.progressTrack",
+        "colors.tinyBtn", "colors.iconBtn", "colors.navBorder",
+        "colors.inputBg", "colors.setDone", "colors.setSkipped",
+        "colors.setPendingBg", "colors.setCurrentBg",
+        "colors.setCurrentBorder", "colors.calHit", "colors.calToday",
+        "colors.danger", "colors.dangerSurface",
+        "radius.xs", "radius.sm", "radius.md", "radius.lg", "radius.xl",
+        "radius.hero", "radius.btn", "radius.full",
+        "fontSize.xxs", "fontSize.xs", "fontSize.sm", "fontSize.base",
+        "fontSize.md", "fontSize.lg", "fontSize.xl", "fontSize.title",
+        "fontSize.restTimer", "fontWeight.regular", "fontWeight.medium",
+        "fontWeight.semibold", "fontWeight.bold", "fontWeight.heavy",
+        "spacing.2", "spacing.4", "spacing.6", "spacing.8", "spacing.10",
+        "spacing.12", "spacing.14", "spacing.16", "spacing.18",
+        "spacing.20", "spacing.24", "spacing.28", "spacing.32",
+        "spacing.40", "spacing.48", "border.thin", "border.strong",
+        "minTap.target", "animation.fastMs", "animation.standardMs",
+        "animation.routeMs", "animation.curve", "dimensions.zero",
+        "dimensions.appBarHeight", "dimensions.bottomNavHeight",
+        "dimensions.primaryButtonHeight", "dimensions.iconButtonSize",
+        "dimensions.emptyIconSize", "dimensions.compactWidth",
+        "dimensions.standardWidth", "dimensions.wideWidth",
+        "dimensions.maxContentWidth", "opacity.disabled", "opacity.overlay",
+        "shadow.cardColor", "shadow.cardBlur", "shadow.cardOffsetY"
+      ]
+    },
+    "skins": {
+      "type": "object",
+      "required": ["appCard", "appBar", "bottomNav"],
+      "additionalProperties": false,
+      "properties": {
+        "appCard": {
+          "type": "object",
+          "required": ["surface", "outline", "radius", "shadow"],
+          "additionalProperties": false,
+          "properties": {
+            "surface": {"type": "string", "minLength": 1},
+            "outline": {"type": "string", "minLength": 1},
+            "radius": {"type": "string", "minLength": 1},
+            "shadow": {"type": "string", "minLength": 1}
+          }
+        },
+        "appBar": {
+          "type": "object",
+          "required": ["surface", "outline", "height"],
+          "additionalProperties": false,
+          "properties": {
+            "surface": {"type": "string", "minLength": 1},
+            "outline": {"type": "string", "minLength": 1},
+            "height": {"type": "string", "minLength": 1}
+          }
+        },
+        "bottomNav": {
+          "type": "object",
+          "required": ["surface", "outline", "indicator", "height"],
+          "additionalProperties": false,
+          "properties": {
+            "surface": {"type": "string", "minLength": 1},
+            "outline": {"type": "string", "minLength": 1},
+            "indicator": {"type": "string", "minLength": 1},
+            "height": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    }
+  }
+}

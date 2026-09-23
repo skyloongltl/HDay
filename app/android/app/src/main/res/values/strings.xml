@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rest_reminder_channel">休息提醒</string>
+    <string name="rest_complete_title">休息结束</string>
+    <string name="rest_complete_body">准备好开始下一组了。</string>
+</resources>

@@ -1,0 +1,92 @@
+<style>
+  .intro { max-width: 860px; margin-bottom: 24px; }
+  .direction-grid { display:grid; grid-template-columns:repeat(3,minmax(250px,1fr)); gap:18px; align-items:start; }
+  .direction { border:2px solid #d8dde5; border-radius:16px; padding:14px; cursor:pointer; background:#fff; transition:.18s ease; }
+  .direction:hover { border-color:#7b8798; transform:translateY(-2px); }
+  .direction.selected { border-color:#222; box-shadow:0 0 0 3px rgba(20,20,20,.09); }
+  .direction h3 { margin:13px 0 5px; }
+  .direction p { margin:0; color:#687386; font-size:14px; line-height:1.5; }
+  .phone { width:238px; height:500px; margin:0 auto; border:3px solid #24272c; border-radius:28px; background:#f5f6f7; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,.1); display:flex; flex-direction:column; }
+  .status { height:21px; padding:5px 14px 0; display:flex; justify-content:space-between; font-size:9px; color:#333; }
+  .screen { padding:10px 12px 8px; flex:1; overflow:hidden; }
+  .topline { display:flex; justify-content:space-between; align-items:center; margin-bottom:11px; }
+  .title { font-weight:750; font-size:18px; }
+  .avatar { width:25px; height:25px; border:1.5px solid #777; border-radius:50%; }
+  .muted { color:#777; font-size:10px; }
+  .hero { border:1.5px solid #59616c; border-radius:12px; padding:12px; background:#fff; margin-bottom:9px; }
+  .hero strong { display:block; font-size:14px; margin-bottom:4px; }
+  .row { display:flex; gap:7px; }
+  .metric { flex:1; padding:8px 5px; border:1px solid #aeb4bc; border-radius:9px; background:white; text-align:center; }
+  .metric b { display:block; font-size:13px; }
+  .metric span { font-size:8px; color:#777; }
+  .block { margin-top:10px; }
+  .block-title { display:flex; justify-content:space-between; font-size:10px; font-weight:700; margin-bottom:6px; }
+  .item { display:flex; align-items:center; gap:7px; border:1px solid #c1c5cb; border-radius:8px; padding:7px; background:white; margin-bottom:5px; }
+  .icon { width:22px; height:22px; border:1px solid #7b8088; border-radius:5px; flex:none; }
+  .lines { flex:1; }
+  .line { height:5px; background:#8a9098; border-radius:5px; width:72%; margin-bottom:4px; }
+  .line.short { width:46%; background:#c2c5c9; margin:0; }
+  .primary { margin-top:9px; border-radius:10px; background:#25282d; color:white; text-align:center; padding:10px 5px; font-size:11px; font-weight:700; }
+  .secondary { margin-top:6px; border:1px solid #747b85; border-radius:10px; text-align:center; padding:8px 5px; font-size:10px; background:white; }
+  .progress { height:7px; background:#d7dade; border-radius:8px; overflow:hidden; margin:8px 0; }
+  .progress > i { display:block; width:42%; height:100%; background:#555d67; }
+  .circle { width:120px; height:120px; border:11px solid #d7dade; border-top-color:#3e454f; border-radius:50%; margin:16px auto 12px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:10px; }
+  .circle b { display:block; font-size:24px; }
+  .bottom { height:52px; border-top:1px solid #c5c8cd; background:white; display:flex; align-items:center; justify-content:space-around; padding:0 5px; }
+  .tab { text-align:center; color:#8a8e94; font-size:8px; width:38px; }
+  .tab i { display:block; margin:0 auto 3px; width:15px; height:15px; border:1.5px solid currentColor; border-radius:4px; }
+  .tab.active { color:#202329; font-weight:700; }
+  .fab { width:39px; height:39px; margin-top:-23px; border-radius:50%; background:#272b31; color:#fff; display:flex; align-items:center; justify-content:center; font-size:20px; border:4px solid white; }
+  .badge { display:inline-block; padding:3px 6px; border:1px solid #9da2a9; border-radius:20px; font-size:8px; }
+  @media(max-width:900px){.direction-grid{grid-template-columns:1fr}.phone{width:255px}}
+</style>
+<div class="intro">
+  <h2>先确定首页的信息重心</h2>
+  <p class="subtitle">三种方案都使用 Android 底部导航，覆盖“今日、计划、日历、动作库”。请选择最符合你日常打开 App 时需求的一种。</p>
+</div>
+<div class="direction-grid">
+  <div class="direction" data-choice="a" onclick="toggleSelect(this)">
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>● ◔ ▰</span></div>
+      <div class="screen">
+        <div class="topline"><div><div class="muted">9月12日 · 周六</div><div class="title">今日训练</div></div><div class="avatar"></div></div>
+        <div class="hero"><span class="badge">胸肩计划 · 第 2 天</span><strong style="margin-top:8px">今天有 5 个动作</strong><div class="muted">共 18 组 · 预计 55 分钟</div><div class="primary">开始今日训练</div><div class="secondary">自由训练</div></div>
+        <div class="row"><div class="metric"><b>46</b><span>累计天数</span></div><div class="metric"><b>3</b><span>本周</span></div><div class="metric"><b>8</b><span>本月</span></div></div>
+        <div class="block"><div class="block-title"><span>今日清单</span><span class="muted">查看全部</span></div><div class="item"><div class="icon"></div><div class="lines"><div class="line"></div><div class="line short"></div></div><b>4组</b></div><div class="item"><div class="icon"></div><div class="lines"><div class="line"></div><div class="line short"></div></div><b>5组</b></div><div class="item"><div class="icon"></div><div class="lines"><div class="line"></div><div class="line short"></div></div><b>3组</b></div></div>
+      </div>
+      <div class="bottom"><div class="tab active"><i></i>今日</div><div class="tab"><i></i>计划</div><div class="tab"><i></i>日历</div><div class="tab"><i></i>动作</div></div>
+    </div>
+    <h3>A · 今日行动型（推荐）</h3><p>打开即看到训练任务和主按钮，统计与清单作为辅助；最符合“到点就练”的使用场景。</p>
+  </div>
+
+  <div class="direction" data-choice="b" onclick="toggleSelect(this)">
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>● ◔ ▰</span></div>
+      <div class="screen">
+        <div class="topline"><div><div class="muted">下午好</div><div class="title">训练概览</div></div><div class="avatar"></div></div>
+        <div class="row"><div class="metric"><b>46</b><span>累计天数</span></div><div class="metric"><b>3/4</b><span>本周目标</span></div><div class="metric"><b>55m</b><span>上次用时</span></div></div>
+        <div class="circle"><div><b>42%</b>本月完成度</div></div>
+        <div class="block"><div class="block-title"><span>今日安排</span><span class="badge">第 2 周期日</span></div><div class="hero"><strong>胸部 + 肩部</strong><div class="muted">5 个动作 · 18 组</div><div class="primary">开始训练</div></div></div>
+        <div class="block"><div class="block-title"><span>近期记录</span><span class="muted">更多</span></div><div class="item"><div class="icon"></div><div class="lines"><div class="line"></div><div class="line short"></div></div></div></div>
+      </div>
+      <div class="bottom"><div class="tab active"><i></i>概览</div><div class="tab"><i></i>计划</div><div class="tab"><i></i>日历</div><div class="tab"><i></i>动作</div></div>
+    </div>
+    <h3>B · 数据概览型</h3><p>将健身频率和阶段进度放在首屏，更有持续激励感，但开始训练的路径相对不够直接。</p>
+  </div>
+
+  <div class="direction" data-choice="c" onclick="toggleSelect(this)">
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>● ◔ ▰</span></div>
+      <div class="screen">
+        <div class="topline"><div><div class="muted">今天 · 第 2 周期日</div><div class="title">准备好训练了吗？</div></div><div class="avatar"></div></div>
+        <div class="circle" style="margin-top:30px"><div><b>18</b>组待完成</div></div>
+        <div style="text-align:center;font-size:13px;font-weight:700">胸部 + 肩部</div><div class="muted" style="text-align:center;margin-top:5px">来自 2 个启用计划</div>
+        <div class="primary" style="padding:14px;margin-top:24px">开始今日训练</div><div class="secondary">恢复上次训练</div>
+        <div class="block" style="margin-top:25px"><div class="block-title"><span>下一项</span><span class="muted">完整清单</span></div><div class="item"><div class="icon"></div><div class="lines"><div class="line"></div><div class="line short"></div></div><b>4×8</b></div></div>
+      </div>
+      <div class="bottom"><div class="tab"><i></i>计划</div><div class="fab">＋</div><div class="tab"><i></i>记录</div></div>
+    </div>
+    <h3>C · 极简启动型</h3><p>首页只服务于“马上训练”，视觉焦点最强；计划与统计需要进入二级页面查看。</p>
+  </div>
+</div>
+<p class="subtitle" style="margin-top:22px">点击一个方案进行选择，也可以在终端中说明想混合哪些特点。</p>

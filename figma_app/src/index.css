@@ -1,0 +1,121 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+@import 'tailwindcss';
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: #d6dde5;
+  margin: 0;
+  padding: 0;
+}
+
+/* Flutter: hide scrollbar by default, show on scroll */
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }
+
+/* Tap highlight suppression */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* ─────────────────────────────────────────────
+   Screen transition keyframes
+   Flutter: PageRouteBuilder / CupertinoPageRoute
+   ───────────────────────────────────────────── */
+
+/* Push: new screen slides in from the right */
+@keyframes screenSlideInRight {
+  from { transform: translateX(100%); opacity: 0.6; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* Pop: screen fades and slides back (previous screen reveal) */
+@keyframes screenSlideInLeft {
+  from { transform: translateX(-24px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+/* Tab switch: cross-fade with subtle vertical lift */
+@keyframes screenFadeUp {
+  from { transform: translateY(6px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+/* Bottom sheet slide up — Flutter: showModalBottomSheet */
+@keyframes sheetSlideUp {
+  from { transform: translateY(100%); opacity: 0.7; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Overlay dim fade in */
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Scale pop — for success/completion moments */
+@keyframes scalePop {
+  0%   { transform: scale(0.7); opacity: 0; }
+  70%  { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Gentle pulse for active/current set highlight */
+@keyframes pulseRing {
+  0%   { box-shadow: 0 0 0 0 rgba(199, 111, 98, 0.35); }
+  70%  { box-shadow: 0 0 0 6px rgba(199, 111, 98, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(199, 111, 98, 0); }
+}
+
+/* Skeleton shimmer for loading states */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* ─── Animation utility classes ─── */
+
+.screen-push {
+  animation: screenSlideInRight 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.screen-pop {
+  animation: screenSlideInLeft 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.screen-tab {
+  animation: screenFadeUp 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.sheet-up {
+  animation: sheetSlideUp 280ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.overlay-in {
+  animation: overlayFadeIn 200ms ease-out both;
+}
+
+.scale-pop {
+  animation: scalePop 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.pulse-ring {
+  animation: pulseRing 1.8s ease-out infinite;
+}
+
+/* ─── Button press micro-interaction ─── */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+  transition: transform 80ms ease-out;
+}
+
+/* ─── Smooth transition for buttons at rest ─── */
+button {
+  transition: transform 100ms ease-out, opacity 150ms ease;
+}
+button:disabled {
+  opacity: 0.5;
+}

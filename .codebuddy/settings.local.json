@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "defaultMode": "autoMode",
+    "ask": [
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(tar:*)",
+      "Bash(unzip:*)",
+      "Bash(7z:*)",
+      "Bash(git clone:*)",
+      "Bash(git push:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -fd:*)",
+      "Bash(git branch -D:*)",
+      "Bash(git branch -d:*)",
+      "Bash(git worktree remove:*)",
+      "PowerShell(Invoke-WebRequest:*)",
+      "PowerShell(iwr:*)",
+      "PowerShell(Expand-Archive:*)"
+    ]
+  },
+  "sandbox": {
+    "enabled": false,
+    "autoAllowBashIfSandboxed": true
+  }
+}

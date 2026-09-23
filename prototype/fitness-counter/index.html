@@ -1,0 +1,2644 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="a">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>健身计数 · 核心训练原型</title>
+  <script>
+    // 在解析样式后的第一帧之前同步已保存主题，避免先渲染默认 A 再跳变到用户主题的闪烁。
+    (function () {
+      try {
+        var saved = localStorage.getItem('fitness-theme');
+        if (saved === 'a' || saved === 'b' || saved === 'c') {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+      } catch (error) {
+        /* 隐私模式或 file:// 拒绝访问 localStorage 时忽略，退回默认主题。 */
+      }
+    })();
+  </script>
+  <style>
+    /* reset */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body { min-block-size: 100dvh; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    h1, h2, h3, h4, p, figure { margin: 0; }
+    ul, ol { margin: 0; padding: 0; list-style: none; }
+    button {
+      font: inherit;
+      color: inherit;
+      background: none;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+      min-block-size: var(--tap-size);
+    }
+    button:disabled { cursor: default; }
+    svg { display: block; }
+
+    /* tokens */
+    :root {
+      --gutter: 16px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 20px;
+      --space-5: 28px;
+      --tap-size: 48px;
+      --primary-button-height: 52px;
+      --top-bar-height: 34px;
+      --screen-pad-top: calc(env(safe-area-inset-top) + 14px);
+
+      --text-title: 23px;
+      --text-hero: 21px;
+      --text-timer: 20px;
+      --text-body: 14px;
+      --text-button: 14px;
+      --text-exercise: 12px;
+      --text-set: 11px;
+      --text-caption: 10px;
+      --text-tag: 10px;
+
+      --weight-regular: 400;
+      --weight-medium: 500;
+      --weight-semibold: 650;
+      --weight-bold: 700;
+
+      --radius-pill: 999px;
+      --transition-theme: 180ms ease-out;
+
+      --family-base: "MiSans", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      --family-display: "MiSans", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      --family-mono: "Roboto Condensed", "Arial Narrow", ui-monospace, monospace;
+    }
+
+    /* themes */
+    [data-theme="a"] {
+      --app-bg: #F4F7FA;
+      --surface-hero: #19344C;
+      --surface-card: #FFFFFF;
+      --primary-action: #C76F62;
+      --active-state: #62E6CA;
+      --secondary-state: #62E6CA;
+      --text-main: #142A3A;
+      --text-muted: #60717E;
+      --text-on-hero: #FFFFFF;
+      --text-on-primary: #FFFFFF;
+      --outline: #DFE7EC;
+      --track-base: #DFE7EC;
+      --track-fill: #C76F62;
+      --radius-hero: 24px;
+      --radius-card: 14px;
+      --radius-button: 14px;
+      --border-width: 1px;
+      --shadow-hero: 0 16px 32px -22px rgba(20, 42, 58, .55);
+      --shadow-card: 0 1px 2px rgba(20, 42, 58, .04);
+      --focus-ring: #19344C;
+      --family-base: "MiSans", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      --family-display: "MiSans", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      --family-mono: "Roboto Condensed", "Arial Narrow", ui-monospace, monospace;
+    }
+    [data-theme="b"] {
+      --app-bg: #FFF7D8;
+      --surface-hero: #FFDF3D;
+      --surface-card: #FFFDF0;
+      --primary-action: #6956DF;
+      --active-state: #FF655F;
+      --secondary-state: #8CE6CF;
+      --text-main: #25231E;
+      --text-muted: #5C5646;
+      --text-on-hero: #25231E;
+      --text-on-primary: #FFFFFF;
+      --outline: #25231E;
+      --track-base: #EFE2A8;
+      --track-fill: #6956DF;
+      --radius-hero: 10px;
+      --radius-card: 8px;
+      --radius-button: 10px;
+      --border-width: 2px;
+      --shadow-hero: 5px 5px 0 var(--outline);
+      --shadow-card: none;
+      --focus-ring: #6956DF;
+      --family-base: "MiSans", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      --family-display: "Smiley Sans", "得意黑", "MiSans", "Noto Sans SC", sans-serif;
+      --family-mono: "MiSans", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    }
+    [data-theme="c"] {
+      --app-bg: #131720;
+      --surface-hero: #1D222C;
+      --surface-card: #1D222C;
+      --primary-action: #5D85FF;
+      --active-state: #C8FF5A;
+      --secondary-state: #5D85FF;
+      --text-main: #EDF2F7;
+      --text-muted: #98A4B3;
+      --text-on-hero: #EDF2F7;
+      --text-on-primary: #FFFFFF;
+      --outline: #303845;
+      --track-base: #303845;
+      --track-fill: #C8FF5A;
+      --radius-hero: 20px;
+      --radius-card: 12px;
+      --radius-button: 12px;
+      --border-width: 1px;
+      --shadow-hero: 0 22px 44px -30px rgba(0, 0, 0, .85);
+      --shadow-card: none;
+      --focus-ring: #5D85FF;
+      --family-base: "HarmonyOS Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      --family-display: "HarmonyOS Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      --family-mono: "Roboto Condensed", "Arial Narrow", ui-monospace, monospace;
+    }
+
+    /* layout */
+    body {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 32px;
+      padding: 28px 20px;
+      background: #E9EDF1;
+      color: var(--text-main);
+      font-family: var(--family-base);
+      font-size: var(--text-body);
+      line-height: 1.55;
+    }
+    .demo-panel {
+      inline-size: 236px;
+      flex: none;
+      display: grid;
+      gap: var(--space-3);
+      padding: var(--space-4);
+      border-radius: 20px;
+      background: #FFFFFF;
+      border: 1px solid #DCE3E9;
+      color: #14232E;
+    }
+    .demo-panel h1 { font-size: 18px; font-weight: var(--weight-bold); }
+    .demo-panel__hint { font-size: var(--text-caption); color: #67757F; line-height: 1.5; }
+    #theme-switcher { display: grid; gap: var(--space-2); }
+    .theme-button {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: 0 var(--space-3);
+      border-radius: 12px;
+      border: 1px solid #DCE3E9;
+      font-size: var(--text-exercise);
+      font-weight: var(--weight-medium);
+      text-align: start;
+    }
+    .theme-button[aria-pressed="true"] {
+      border-color: #19344C;
+      box-shadow: inset 0 0 0 1px #19344C;
+    }
+    .theme-button__swatch {
+      inline-size: 18px;
+      block-size: 18px;
+      border-radius: 6px;
+      border: 1px solid rgba(0, 0, 0, .12);
+      flex: none;
+    }
+    .swatch--a { background: linear-gradient(135deg, #19344C 0 50%, #C76F62 50% 100%); }
+    .swatch--b { background: linear-gradient(135deg, #FFDF3D 0 50%, #6956DF 50% 100%); }
+    .swatch--c { background: linear-gradient(135deg, #1D222C 0 50%, #C8FF5A 50% 100%); }
+    .demo-panel__reset {
+      padding: 0 var(--space-3);
+      border-radius: 12px;
+      border: 1px solid #DCE3E9;
+      font-size: var(--text-exercise);
+      font-weight: var(--weight-medium);
+    }
+    .demo-panel__jump {
+      padding: 0 var(--space-3);
+      border-radius: 12px;
+      border: 1px solid #DCE3E9;
+      font-size: var(--text-exercise);
+      font-weight: var(--weight-medium);
+    }
+    .device-shell {
+      inline-size: 390px;
+      block-size: min(844px, calc(100dvh - 56px));
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      background: var(--app-bg);
+      color: var(--text-main);
+      border: 8px solid #1B232B;
+      border-radius: 36px;
+      box-shadow: 0 24px 60px -28px rgba(12, 22, 32, .5);
+      transition: background var(--transition-theme), color var(--transition-theme);
+    }
+    #screen-root { flex: 1; min-block-size: 0; display: flex; }
+
+    /* components */
+    .screen {
+      flex: 1;
+      min-block-size: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--app-bg);
+    }
+    .screen__scroll {
+      flex: 1;
+      min-block-size: 0;
+      overflow-y: auto;
+      padding: var(--screen-pad-top) var(--gutter) var(--space-3);
+    }
+    .sr-only {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .today-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--space-2);
+      min-block-size: var(--top-bar-height);
+    }
+    .today-top__date {
+      font-size: var(--text-tag);
+      font-weight: var(--weight-regular);
+      color: var(--text-muted);
+      letter-spacing: .02em;
+      line-height: 1.40;
+    }
+    .today-top__right { display: inline-flex; align-items: center; gap: var(--space-2); }
+    .page-tag {
+      font-size: var(--text-tag);
+      font-weight: var(--weight-medium);
+      color: var(--text-muted);
+      line-height: 1.40;
+    }
+    .icon-button {
+      inline-size: var(--tap-size);
+      block-size: var(--tap-size);
+      min-inline-size: var(--tap-size);
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-pill);
+      color: var(--text-main);
+      margin-block-end: -12px;
+    }
+    .screen__title {
+      margin-block: var(--space-1) var(--space-3);
+      font-size: var(--text-title);
+      font-weight: var(--weight-bold);
+      line-height: 1.25;
+      font-family: var(--family-display);
+    }
+    .hero {
+      position: relative;
+      display: grid;
+      gap: var(--space-1);
+      padding: var(--space-4);
+      border-radius: var(--radius-hero);
+      background: var(--surface-hero);
+      color: var(--text-on-hero);
+      border: var(--border-width) solid var(--outline);
+      box-shadow: var(--shadow-hero);
+    }
+    [data-theme="a"] .hero { border-color: transparent; }
+    .hero__eyebrow {
+      font-size: var(--text-caption);
+      font-weight: var(--weight-medium);
+      opacity: .78;
+      letter-spacing: .04em;
+    }
+    .hero__title {
+      font-size: var(--text-hero);
+      font-weight: var(--weight-bold);
+      line-height: 1.3;
+      font-family: var(--family-display);
+    }
+    .hero__meta {
+      font-size: var(--text-caption);
+      line-height: 1.40;
+      opacity: .82;
+    }
+    .rhythm {
+      display: grid;
+      gap: var(--space-2);
+      margin-block-start: var(--space-3);
+    }
+    .rhythm__track { inline-size: 100%; block-size: 12px; }
+    .rhythm__line { stroke: var(--track-base); stroke-width: 3; stroke-linecap: round; }
+    .rhythm__node { fill: var(--surface-hero); stroke: var(--track-fill); stroke-width: 3; }
+    .rhythm__node--mid { fill: var(--track-fill); }
+    .rhythm__legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: var(--text-caption);
+      opacity: .72;
+    }
+    .button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      inline-size: 100%;
+      border-radius: var(--radius-button);
+      border: var(--border-width) solid transparent;
+      font-size: var(--text-button);
+      font-weight: var(--weight-semibold);
+      line-height: 1;
+      background: var(--surface-card);
+      color: var(--text-main);
+    }
+    .button--primary {
+      block-size: var(--primary-button-height);
+      background: var(--primary-action);
+      color: var(--text-on-primary);
+    }
+    [data-theme="b"] .button--primary { border-color: var(--outline); box-shadow: 5px 5px 0 var(--outline); }
+    /* 禁用主按钮不能长得和可用主按钮一样：改用次要表面 + 次文字 + 虚线描边，
+       而不是靠降低透明度（透明度在部分主题下仍会被误读为可点击）。 */
+    .button--primary[disabled] {
+      background: var(--surface-card);
+      color: var(--text-muted);
+      border-color: var(--outline);
+      border-style: dashed;
+      box-shadow: none;
+    }
+    .button--ghost {
+      block-size: var(--tap-size);
+      background: transparent;
+      border-color: var(--outline);
+      color: var(--text-main);
+    }
+    .button--ghost[disabled] {
+      color: var(--text-muted);
+      border-style: dashed;
+    }
+    .button__hint { font-size: var(--text-caption); font-weight: var(--weight-regular); color: var(--text-muted); }
+    .actions { display: grid; gap: var(--space-2); margin-block-start: var(--space-3); }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-2);
+      margin-block-start: var(--space-4);
+      padding: var(--space-3);
+      border-radius: var(--radius-card);
+      background: var(--surface-card);
+      border: var(--border-width) solid var(--outline);
+    }
+    .stat { display: grid; gap: 2px; text-align: center; }
+    .stat__value {
+      font-family: var(--family-mono);
+      font-size: var(--text-timer);
+      font-weight: var(--weight-bold);
+      line-height: 1.1;
+    }
+    .stat__label { font-size: var(--text-caption); line-height: 1.40; color: var(--text-muted); }
+    .section { margin-block-start: var(--space-4); }
+    .section__head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-block-end: var(--space-2);
+    }
+    .section__title { font-size: var(--text-exercise); font-weight: var(--weight-semibold); }
+    .section__meta { font-size: var(--text-caption); color: var(--text-muted); }
+    .exercise-list { display: grid; gap: var(--space-2); }
+    .exercise {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-card);
+      background: var(--surface-card);
+      border: var(--border-width) solid var(--outline);
+    }
+    .exercise__index {
+      inline-size: 30px;
+      block-size: 30px;
+      flex: none;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-card);
+      background: var(--app-bg);
+      border: 1px solid var(--outline);
+      font-family: var(--family-mono);
+      font-size: var(--text-set);
+      font-weight: var(--weight-medium);
+      color: var(--text-muted);
+    }
+    .exercise__body { display: grid; gap: 1px; }
+    .exercise__name {
+      font-size: var(--text-exercise);
+      font-weight: var(--weight-semibold);
+      line-height: 1.35;
+    }
+    .exercise__meta {
+      font-size: var(--text-set);
+      font-weight: var(--weight-medium);
+      line-height: 1.35;
+      color: var(--text-muted);
+    }
+    .bottom-nav {
+      flex: none;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--outline);
+      padding-block-end: env(safe-area-inset-bottom);
+      background: var(--surface-card);
+    }
+    .bottom-nav__item {
+      display: grid;
+      justify-items: center;
+      align-content: center;
+      gap: 2px;
+      font-size: var(--text-caption);
+      color: var(--text-muted);
+      min-inline-size: var(--tap-size);
+    }
+    .bottom-nav__item[aria-current="page"] { color: var(--primary-action); font-weight: var(--weight-medium); }
+    .bottom-nav__item[aria-disabled="true"] { opacity: .55; }
+    .theme-menu {
+      position: absolute;
+      inset-block-start: calc(env(safe-area-inset-top) + 52px);
+      inset-inline-end: var(--gutter);
+      z-index: 5;
+      display: grid;
+      gap: var(--space-1);
+      inline-size: 210px;
+      padding: var(--space-2);
+      border-radius: var(--radius-card);
+      background: var(--surface-card);
+      border: var(--border-width) solid var(--outline);
+      box-shadow: 0 18px 36px -22px rgba(12, 22, 32, .6);
+    }
+    .theme-option {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: 0 var(--space-2);
+      border-radius: calc(var(--radius-card) - 4px);
+      font-size: var(--text-exercise);
+      text-align: start;
+    }
+    .theme-option[aria-pressed="true"] { background: var(--app-bg); font-weight: var(--weight-semibold); }
+    .theme-option__swatch {
+      inline-size: 16px;
+      block-size: 16px;
+      border-radius: 5px;
+      border: 1px solid rgba(0, 0, 0, .12);
+      flex: none;
+    }
+
+    /* prepare */
+    .prepare-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+      min-block-size: var(--top-bar-height);
+    }
+    .prepare-source {
+      margin-block-start: var(--space-2);
+      font-size: var(--text-set);
+      font-weight: var(--weight-medium);
+      line-height: 1.35;
+    }
+    .prepare-note {
+      font-size: var(--text-caption);
+      line-height: 1.40;
+      color: var(--text-muted);
+    }
+    .prepare-list { display: grid; gap: var(--space-2); margin-block-start: var(--space-3); }
+    .prep-exercise {
+      display: grid;
+      border-radius: var(--radius-card);
+      background: var(--surface-card);
+      border: var(--border-width) solid var(--outline);
+      overflow: hidden;
+    }
+    .prep-exercise__head { display: flex; align-items: center; }
+    .prep-exercise__toggle {
+      flex: 1;
+      min-inline-size: 0;
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: 0 var(--space-1) 0 var(--space-3);
+      text-align: start;
+    }
+    .prep-exercise__chevron {
+      margin-inline-start: auto;
+      flex: none;
+      color: var(--text-muted);
+      transition: transform var(--transition-theme);
+    }
+    .prep-exercise__toggle[aria-expanded="true"] .prep-exercise__chevron { transform: rotate(180deg); }
+    .prep-exercise__handle {
+      flex: none;
+      inline-size: var(--tap-size);
+      display: grid;
+      place-items: center;
+      color: var(--text-muted);
+      border-radius: var(--radius-pill);
+    }
+    .prep-exercise__handle[aria-disabled="true"] { cursor: default; }
+    .prep-sets { display: grid; padding: 0 var(--space-3) var(--space-2); }
+    .prep-set {
+      display: grid;
+      gap: var(--space-2);
+      padding-block: var(--space-2);
+      border-block-start: 1px solid var(--outline);
+    }
+    .prep-set__head { display: flex; align-items: baseline; gap: var(--space-2); }
+    .prep-set__no {
+      font-family: var(--family-mono);
+      font-size: var(--text-set);
+      font-weight: var(--weight-semibold);
+      line-height: 1.35;
+    }
+    .prep-set__planned {
+      margin-inline-start: auto;
+      font-family: var(--family-mono);
+      font-size: var(--text-set);
+      line-height: 1.35;
+      color: var(--text-muted);
+    }
+    .prep-set__flag {
+      font-size: var(--text-caption);
+      font-weight: var(--weight-medium);
+      line-height: 1.40;
+      color: var(--primary-action);
+    }
+    .prep-set__fields { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+    .prep-set__field { display: grid; gap: 3px; min-inline-size: 0; }
+    .prep-set__label { font-size: var(--text-caption); line-height: 1.40; color: var(--text-muted); }
+    .prep-set__control {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: 0 var(--space-2);
+      min-block-size: var(--tap-size);
+      border-radius: calc(var(--radius-card) - 4px);
+      background: var(--app-bg);
+      border: var(--border-width) solid var(--outline);
+    }
+    .prep-set__input {
+      flex: 1;
+      min-inline-size: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      font: inherit;
+      font-family: var(--family-mono);
+      font-size: var(--text-body);
+      font-weight: var(--weight-semibold);
+      color: var(--text-main);
+      appearance: textfield;
+    }
+    .prep-set__input::-webkit-outer-spin-button,
+    .prep-set__input::-webkit-inner-spin-button { appearance: none; margin: 0; }
+    .prep-set__unit { font-size: var(--text-caption); color: var(--text-muted); }
+    .prepare-footer {
+      flex: none;
+      padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
+      background: var(--surface-card);
+      border-block-start: var(--border-width) solid var(--outline);
+    }
+    .placeholder-note {
+      margin-block-start: var(--space-3);
+      font-size: var(--text-set);
+      line-height: 1.40;
+      color: var(--text-muted);
+    }
+
+    /* workout */
+    .screen[data-screen="workout"] .screen__scroll { padding-block-start: 0; }
+    .workout-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+      min-block-size: var(--tap-size);
+      /* 顶栏在 .screen__scroll 内滚动时仍然固定可见。工作页把滚动容器顶部内边距移到这里，
+         顶栏才能贴住滚动区上沿，不会在它上方露出一条滚动内容；负外边距 + 水平内边距
+         让不透底的背景铺满整宽。 */
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 2;
+      margin-inline: calc(-1 * var(--gutter));
+      padding-inline: var(--gutter);
+      padding-block-start: var(--screen-pad-top);
+      padding-block-end: var(--space-2);
+      background: var(--app-bg);
+    }
+    .workout-top__timer { display: grid; gap: 1px; }
+    .workout-top__label { font-size: var(--text-caption); line-height: 1.40; color: var(--text-muted); }
+    .workout-top__value {
+      font-family: var(--family-mono);
+      font-size: var(--text-timer);
+      font-weight: var(--weight-bold);
+      line-height: 1.1;
+    }
+    .workout-top__right { display: inline-flex; align-items: center; gap: var(--space-2); }
+    .workout-end {
+      inline-size: var(--tap-size);
+      block-size: var(--tap-size);
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-pill);
+      border: var(--border-width) solid var(--outline);
+      background: var(--surface-card);
+      color: var(--text-muted);
+      font-size: var(--text-exercise);
+      font-weight: var(--weight-bold);
+      line-height: 1;
+    }
+    .rhythm--linear { gap: var(--space-1); }
+    .rhythm--linear .rhythm__node[data-state="pending"] { fill: transparent; stroke: var(--track-base); stroke-width: 2; }
+    .rhythm--linear .rhythm__node[data-state="active"] { fill: var(--active-state); stroke: var(--track-fill); stroke-width: 3; }
+    .rhythm--linear .rhythm__node[data-state="completed"] { fill: var(--track-fill); stroke: var(--track-fill); stroke-width: 3; }
+    .rhythm--linear .rhythm__node[data-state="skipped"] { fill: transparent; stroke: var(--text-muted); stroke-width: 2; stroke-dasharray: 2 2; }
+    .workout-group {
+      margin-block-start: var(--space-3);
+      padding: var(--space-2) var(--space-3) var(--space-3);
+      border-radius: var(--radius-card);
+      background: var(--surface-card);
+      border: var(--border-width) solid var(--outline);
+    }
+    .workout-group__head { display: flex; align-items: center; gap: var(--space-3); padding-block-end: var(--space-2); }
+    .workout-sets { display: grid; gap: var(--space-2); }
+    .workout-set { display: grid; }
+    .workout-set__row {
+      inline-size: 100%;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      grid-template-areas: 'no status right' 'values values values';
+      align-items: center;
+      gap: 2px var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      min-block-size: var(--tap-size);
+      border-radius: calc(var(--radius-card) - 4px);
+      border: var(--border-width) solid var(--outline);
+      background: var(--app-bg);
+      text-align: start;
+    }
+    .workout-set__row[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--primary-action); }
+    .workout-set__no { grid-area: no; font-family: var(--family-mono); font-size: var(--text-set); color: var(--text-muted); }
+    .workout-set__status { grid-area: status; display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-set); font-weight: var(--weight-medium); }
+    .workout-set__mark { font-size: var(--text-caption); }
+    .workout-set__right { grid-area: right; justify-self: end; display: inline-flex; align-items: center; gap: var(--space-2); }
+    .workout-set__temp { font-size: var(--text-caption); font-weight: var(--weight-medium); color: var(--primary-action); }
+    .workout-set__values {
+      grid-area: values;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px var(--space-3);
+      font-family: var(--family-mono);
+      font-size: var(--text-caption);
+      line-height: 1.40;
+    }
+    .workout-set__planned { color: var(--text-muted); }
+    .workout-set__actual { color: var(--text-main); }
+    .workout-set__timer { font-family: var(--family-mono); font-weight: var(--weight-bold); }
+    .workout-set__row[data-state="active"] {
+      border-color: var(--active-state);
+      box-shadow: inset 0 0 0 2px var(--active-state);
+    }
+    .workout-set__row[data-state="active"] .workout-set__status { color: var(--active-state); }
+    .workout-set__row[data-state="completed"] .workout-set__actual { color: var(--text-muted); }
+    .workout-set__row[data-state="skipped"] { opacity: .6; border-style: dashed; }
+    .workout-set__row[data-state="skipped"] .workout-set__status { text-decoration: line-through; }
+    .workout-set__row[aria-disabled="true"] { cursor: default; }
+    .set-editor {
+      margin-block-start: var(--space-3);
+      padding: var(--space-3);
+      border-radius: var(--radius-card);
+      border: var(--border-width) dashed var(--outline);
+      background: var(--surface-card);
+    }
+    .set-editor__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); margin-block-end: var(--space-2); }
+    .set-editor__title { font-size: var(--text-set); font-weight: var(--weight-semibold); }
+    .workout-secondary { grid-template-columns: repeat(3, 1fr); }
+    .workout-secondary .button--ghost { padding-inline: var(--space-1); font-size: var(--text-button); }
+    .workout-footer {
+      flex: none;
+      padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
+      background: var(--surface-card);
+      border-block-start: var(--border-width) solid var(--outline);
+    }
+
+    /* rest */
+    /* 休息页复用训练页固定顶栏：滚动容器顶部内边距同样上移到顶栏内部。 */
+    .screen[data-screen="rest"] .screen__scroll { padding-block-start: 0; }
+    .rest-timer {
+      display: grid;
+      justify-items: center;
+      gap: var(--space-2);
+      margin-block-start: var(--space-2);
+    }
+    .rest-ring {
+      position: relative;
+      inline-size: 200px;
+      block-size: 200px;
+      display: grid;
+      place-items: center;
+    }
+    .rest-ring__svg { inline-size: 100%; block-size: 100%; }
+    .rest-ring__ticks { opacity: 0; }
+    [data-theme="c"] .rest-ring__ticks { opacity: 1; }
+    .rest-ring__tick { stroke: var(--track-base); stroke-width: 2; stroke-linecap: round; opacity: .45; }
+    .rest-ring__track { fill: none; stroke: var(--track-base); stroke-width: 9; }
+    .rest-ring__progress {
+      fill: none;
+      stroke: var(--track-fill);
+      stroke-width: 9;
+      stroke-linecap: round;
+      /* SVG 圆从 3 点方向起画；旋转 -90° 让进度从 12 点方向开始。 */
+      transform: rotate(-90deg);
+      transform-origin: 60px 60px;
+      transition: stroke-dashoffset 250ms linear, stroke var(--transition-theme);
+    }
+    .rest-ring__readout {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      justify-items: center;
+      gap: 2px;
+      pointer-events: none;
+    }
+    .rest-ring__value {
+      font-family: var(--family-mono);
+      font-size: 40px;
+      font-weight: var(--weight-bold);
+      line-height: 1;
+    }
+    .rest-ring__target { font-size: var(--text-caption); color: var(--text-muted); line-height: 1.40; }
+    .rest-ring__badge {
+      position: absolute;
+      inset-block-start: 14px;
+      inset-inline-end: 14px;
+      inline-size: 34px;
+      block-size: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-pill);
+      background: var(--active-state);
+      color: var(--app-bg);
+      opacity: 0;
+      transform: scale(.62);
+      transition: opacity var(--transition-theme), transform var(--transition-theme);
+    }
+    .rest-ring[data-state="reached"] .rest-ring__progress { stroke: var(--active-state); }
+    .rest-ring[data-state="reached"] .rest-ring__badge { opacity: 1; transform: scale(1); }
+    .rest-status {
+      font-size: var(--text-body);
+      font-weight: var(--weight-medium);
+      line-height: 1.4;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .rest-ring[data-state="reached"] ~ .rest-status { color: var(--active-state); }
+
+    /* 达标一次性视觉确认：仅播放一次，动画结束停在终态；reduced-motion 下全部取消。 */
+    .rest-ring--celebrate .rest-ring__progress { animation: rest-breath 900ms ease-out 1; }
+    [data-theme="b"] .rest-ring--celebrate .rest-ring__badge { animation: rest-stamp 620ms cubic-bezier(.2, .8, .3, 1.25) 1 both; }
+    [data-theme="c"] .rest-ring--celebrate .rest-ring__tick { animation: rest-tick 760ms ease-out 1 both; }
+    @keyframes rest-breath {
+      0% { opacity: 1; }
+      40% { opacity: .42; }
+      70% { opacity: 1; }
+      100% { opacity: 1; }
+    }
+    @keyframes rest-stamp {
+      0% { opacity: 0; transform: scale(1.5); }
+      62% { opacity: 1; transform: scale(.94); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes rest-tick {
+      0% { opacity: .3; stroke: var(--track-fill); }
+      45% { opacity: 1; stroke: var(--active-state); }
+      100% { opacity: .85; stroke: var(--track-fill); }
+    }
+
+    .rest-section { margin-block-start: var(--space-4); }
+    .rest-next-card {
+      display: grid;
+      gap: 2px;
+      padding: var(--space-3);
+      border-radius: var(--radius-card);
+      background: var(--surface-card);
+      border: var(--border-width) solid var(--outline);
+    }
+    .rest-next-card__eyebrow { font-size: var(--text-caption); color: var(--text-muted); line-height: 1.40; }
+    .rest-next-card__title {
+      font-family: var(--family-mono);
+      font-size: var(--text-hero);
+      font-weight: var(--weight-bold);
+      line-height: 1.25;
+    }
+    .rest-next-card__meta { font-family: var(--family-mono); font-size: var(--text-set); color: var(--text-muted); line-height: 1.35; }
+    .rest-preview {
+      margin-block-start: var(--space-2);
+      font-size: var(--text-set);
+      line-height: 1.40;
+      color: var(--text-muted);
+    }
+    .rest-done-note {
+      margin-block-start: var(--space-4);
+      padding: var(--space-3);
+      border-radius: var(--radius-card);
+      border: var(--border-width) solid var(--outline);
+      background: var(--surface-card);
+      font-size: var(--text-set);
+      line-height: 1.40;
+      color: var(--text-muted);
+    }
+    .rest-chooser {
+      display: grid;
+      gap: var(--space-2);
+      margin-block-start: var(--space-2);
+      padding: var(--space-2);
+      border-radius: var(--radius-card);
+      border: var(--border-width) dashed var(--outline);
+      background: var(--surface-card);
+    }
+    .rest-chooser__item {
+      display: grid;
+      gap: 1px;
+      padding: var(--space-2) var(--space-3);
+      border-radius: calc(var(--radius-card) - 4px);
+      border: var(--border-width) solid var(--outline);
+      background: var(--app-bg);
+      text-align: start;
+    }
+    .rest-chooser__name { font-size: var(--text-exercise); font-weight: var(--weight-semibold); line-height: 1.35; }
+    .rest-chooser__meta { font-family: var(--family-mono); font-size: var(--text-set); color: var(--text-muted); line-height: 1.35; }
+
+    /* summary */
+    /* 收束轨道：只保留完成/跳过两种终态，节点形态与线性轨道一致。 */
+    .rhythm--closing { gap: var(--space-1); }
+    .rhythm--closing .rhythm__node[data-state="completed"] { fill: var(--track-fill); stroke: var(--track-fill); stroke-width: 3; }
+    .rhythm--closing .rhythm__node[data-state="skipped"] { fill: transparent; stroke: var(--text-muted); stroke-width: 2; stroke-dasharray: 2 2; }
+    .summary-lead {
+      display: grid;
+      gap: var(--space-1);
+      padding: var(--space-4);
+      border-radius: var(--radius-hero);
+      background: var(--surface-hero);
+      color: var(--text-on-hero);
+      border: var(--border-width) solid var(--outline);
+      box-shadow: var(--shadow-hero);
+    }
+    [data-theme="a"] .summary-lead { border-color: transparent; }
+    .summary-lead__eyebrow { font-size: var(--text-caption); font-weight: var(--weight-medium); opacity: .78; letter-spacing: .04em; }
+    .summary-lead__value { font-family: var(--family-mono); font-size: 34px; font-weight: var(--weight-bold); line-height: 1.1; }
+    .summary-lead__meta { font-size: var(--text-set); opacity: .82; line-height: 1.40; }
+    .summary-stats { grid-template-columns: repeat(3, 1fr); }
+    .summary-list { display: grid; gap: var(--space-2); }
+    .summary-item {
+      display: grid;
+      gap: 2px;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-card);
+      background: var(--surface-card);
+      border: var(--border-width) solid var(--outline);
+    }
+    .summary-item__name { font-size: var(--text-exercise); font-weight: var(--weight-semibold); line-height: 1.35; }
+    .summary-item__meta { font-family: var(--family-mono); font-size: var(--text-set); color: var(--text-muted); line-height: 1.35; overflow-wrap: anywhere; }
+    .summary-notes { display: grid; gap: var(--space-1); }
+    .summary-notes__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+    .summary-notes__label { font-size: var(--text-exercise); font-weight: var(--weight-semibold); }
+    .summary-notes__count { font-family: var(--family-mono); font-size: var(--text-caption); color: var(--text-muted); }
+    .summary-notes__input {
+      inline-size: 100%;
+      min-block-size: 88px;
+      resize: vertical;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-card);
+      border: var(--border-width) solid var(--outline);
+      background: var(--surface-card);
+      color: var(--text-main);
+      font: inherit;
+      font-size: var(--text-body);
+      line-height: 1.5;
+    }
+    .summary-footer {
+      flex: none;
+      padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
+      background: var(--surface-card);
+      border-block-start: var(--border-width) solid var(--outline);
+    }
+
+    /* today completed */
+    .completed-card {
+      position: relative;
+      display: grid;
+      gap: var(--space-2);
+      padding: var(--space-4);
+      border-radius: var(--radius-hero);
+      background: var(--surface-hero);
+      color: var(--text-on-hero);
+      border: var(--border-width) solid var(--outline);
+      box-shadow: var(--shadow-hero);
+    }
+    [data-theme="a"] .completed-card { border-color: transparent; }
+    .completed-card__eyebrow { font-size: var(--text-caption); font-weight: var(--weight-medium); opacity: .78; letter-spacing: .04em; }
+    .completed-card__title { font-size: var(--text-hero); font-weight: var(--weight-bold); line-height: 1.3; font-family: var(--family-display); }
+    .completed-card__meta { font-size: var(--text-set); opacity: .85; line-height: 1.40; }
+    .completed-card__note { font-size: var(--text-set); line-height: 1.40; opacity: .9; overflow-wrap: anywhere; }
+    .completed-card .actions .button--ghost { color: var(--text-on-hero); border-color: currentColor; }
+    .completed-review { display: grid; gap: var(--space-2); margin-block-start: var(--space-3); }
+
+    /* overlays: 结束 Bottom Sheet 与放弃二次确认 */
+    .overlay-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+    }
+    .overlay-mask {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: rgba(12, 22, 32, .5);
+    }
+    /* 结束 Sheet 与二次确认共用一个网格单元：dialog 居中覆盖在 Sheet 之上，
+       而不是参与网格流把 Sheet 顶起，因此短视口/横屏也不会挤压 Sheet。 */
+    .overlay-layer > .end-sheet,
+    .overlay-layer > .discard-dialog { grid-area: 1 / 1; }
+    /* 二次确认打开时把遮罩抬到 Sheet 之上：底层 Sheet 变暗，点它只会落到遮罩上
+       （等价「返回训练」），不会误触被覆盖的保存按钮。 */
+    .overlay-layer--dialog .overlay-mask { z-index: 2; }
+    .end-sheet {
+      position: relative;
+      z-index: 1;
+      align-self: end;
+      inline-size: 100%;
+      max-block-size: 90%;
+      overflow-y: auto;
+      display: grid;
+      gap: var(--space-3);
+      padding: var(--space-4) var(--gutter) calc(var(--space-4) + env(safe-area-inset-bottom));
+      background: var(--surface-card);
+      border-block-start: var(--border-width) solid var(--outline);
+      border-start-start-radius: var(--radius-hero);
+      border-start-end-radius: var(--radius-hero);
+    }
+    [data-theme="a"] .end-sheet { box-shadow: 0 -20px 44px -30px rgba(20, 42, 58, .55); }
+    .end-sheet__head { display: grid; gap: 2px; }
+    .end-sheet__title { font-size: var(--text-hero); font-weight: var(--weight-bold); line-height: 1.3; font-family: var(--family-display); }
+    .end-sheet__hint { font-size: var(--text-set); line-height: 1.40; color: var(--text-muted); }
+    .sheet-metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2); }
+    .sheet-metric {
+      display: grid;
+      gap: 2px;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-card);
+      background: var(--app-bg);
+      border: var(--border-width) solid var(--outline);
+    }
+    .sheet-metric__value { font-family: var(--family-mono); font-size: var(--text-timer); font-weight: var(--weight-bold); line-height: 1.1; }
+    .sheet-metric__label { font-size: var(--text-caption); line-height: 1.40; color: var(--text-muted); }
+    .sheet-actions { display: grid; gap: var(--space-2); margin-block-start: var(--space-1); }
+
+    .discard-dialog {
+      position: relative;
+      z-index: 2;
+      inline-size: calc(100% - 2 * var(--gutter));
+      max-inline-size: 320px;
+      max-block-size: 90%;
+      overflow-y: auto;
+      display: grid;
+      gap: var(--space-3);
+      padding: var(--space-4);
+      border-radius: var(--radius-card);
+      background: var(--surface-card);
+      border: var(--border-width) solid var(--outline);
+    }
+    [data-theme="a"] .discard-dialog { box-shadow: 0 24px 48px -28px rgba(20, 42, 58, .6); }
+    .discard-dialog__title { font-size: var(--text-hero); font-weight: var(--weight-bold); line-height: 1.3; }
+    .discard-dialog__desc { font-size: var(--text-set); line-height: 1.40; color: var(--text-muted); }
+    .discard-dialog__actions { display: grid; gap: var(--space-2); }
+
+    /* screens */
+    .screen[data-screen="today"] .screen__title { margin-block-start: var(--space-2); }
+
+    /* utilities */
+    .stack-2 { display: grid; gap: var(--space-2); }
+    /* hidden 属性放在组件层之后，用层叠顺序（而非 !important）覆盖组件的 display 声明。 */
+    [hidden] { display: none; }
+    :focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+
+    /* motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+      /* 达标确认在减少动画下不做任何动画与缩放，只保留静态完成形态。 */
+      .rest-ring--celebrate,
+      .rest-ring--celebrate .rest-ring__progress,
+      .rest-ring--celebrate .rest-ring__badge,
+      .rest-ring--celebrate .rest-ring__tick {
+        animation: none !important;
+      }
+      .rest-ring__badge { transform: none !important; }
+    }
+    @media (max-width: 520px) {
+      body { display: block; padding: 0; background: var(--app-bg); }
+      .demo-panel { display: none; }
+      .demo-panel__jump { display: none; }
+      .device-shell {
+        inline-size: 100%;
+        block-size: 100dvh;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <aside class="demo-panel" aria-label="原型控制">
+    <h1>训练核心闭环</h1>
+    <p class="demo-panel__hint">桌面展示栏。移动端请在手机右上角使用调色板入口切换主题。</p>
+    <div id="theme-switcher" role="group" aria-label="界面风格"></div>
+    <button type="button" class="demo-panel__jump" id="demo-jump-rest" data-action="JUMP_REST_TIMER" hidden>跳至目标前 3 秒</button>
+    <button type="button" class="demo-panel__reset" data-action="RESET_DEMO">重置演示</button>
+  </aside>
+  <main id="app-shell" class="device-shell" data-theme="a">
+    <div id="live-status" class="sr-only" aria-live="polite"></div>
+    <div id="screen-root"></div>
+  </main>
+  <script id="prototype-core">
+(function (root, factory) {
+  root.FitnessPrototypeCore = factory();
+})(window, function () {
+  const VALID_THEMES = new Set(['a', 'b', 'c']);
+
+  function makeSets(prefix, count, weight, reps) {
+    return Array.from({ length: count }, (_, index) => ({
+      id: `${prefix}-${index + 1}`,
+      plannedWeight: weight,
+      actualWeight: weight,
+      plannedReps: reps,
+      actualReps: reps,
+      status: 'pending',
+      durationSeconds: 0,
+      temporary: false
+    }));
+  }
+
+  function resolveTheme(value) {
+    return VALID_THEMES.has(value) ? value : 'a';
+  }
+
+  function createInitialState() {
+    return {
+      screen: 'today',
+      theme: 'a',
+      sessionStatus: 'idle',
+      workoutStartedAt: null,
+      activeSetStartedAt: null,
+      restStartedAt: null,
+      restTargetSeconds: 90,
+      selectedSetId: 'bench-1',
+      completedSummary: null,
+      notes: '',
+      exercises: [
+        { id: 'bench', name: '杠铃卧推', collapsed: false, sets: makeSets('bench', 3, 60, 8) },
+        { id: 'press', name: '哑铃肩推', collapsed: false, sets: makeSets('press', 3, 16, 10) },
+        { id: 'pushdown', name: '绳索下压', collapsed: false, sets: makeSets('pushdown', 3, 25, 12) }
+      ]
+    };
+  }
+
+  function setTheme(state, theme) {
+    return { ...state, theme: resolveTheme(theme) };
+  }
+
+  function formatDuration(seconds) {
+    const value = Number(seconds);
+    const safe = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+    const hours = Math.floor(safe / 3600);
+    const minutes = Math.floor((safe % 3600) / 60);
+    const secs = safe % 60;
+    const mm = String(minutes).padStart(2, '0');
+    const ss = String(secs).padStart(2, '0');
+    return hours ? `${hours}:${mm}:${ss}` : `${mm}:${ss}`;
+  }
+
+  function getWorkoutStats(state) {
+    const sets = state.exercises.flatMap(item => item.sets);
+    const count = status => sets.filter(set => set.status === status).length;
+    return {
+      total: sets.length,
+      completed: count('completed'),
+      skipped: count('skipped'),
+      active: count('active'),
+      pending: count('pending'),
+      completedExercises: state.exercises.filter(item => item.sets.some(set => set.status === 'completed')).length
+    };
+  }
+
+  function updateSet(state, setId, updater) {
+    return {
+      ...state,
+      exercises: state.exercises.map(exercise => ({
+        ...exercise,
+        sets: exercise.sets.map(set => set.id === setId ? updater(set) : set)
+      }))
+    };
+  }
+
+  function findSet(state, setId) {
+    return state.exercises.flatMap(item => item.sets).find(set => set.id === setId);
+  }
+
+  function prepareWorkout(state) {
+    return { ...state, screen: 'prepare', sessionStatus: 'preparing' };
+  }
+
+  function startWorkout(state, nowMs) {
+    // 重复开始会覆盖既有开始时间，让时长统计倒退；已进入执行/休息/总结阶段时保持不动。
+    if (['active', 'resting', 'summary'].includes(state.sessionStatus)) return state;
+    return { ...state, screen: 'workout', sessionStatus: 'active', workoutStartedAt: nowMs };
+  }
+
+  function toggleExercise(state, exerciseId) {
+    return {
+      ...state,
+      exercises: state.exercises.map(item => item.id === exerciseId ? { ...item, collapsed: !item.collapsed } : item)
+    };
+  }
+
+  function editSet(state, setId, patch) {
+    return updateSet(state, setId, set => ({
+      ...set,
+      actualWeight: patch.actualWeight == null ? set.actualWeight : Number(patch.actualWeight),
+      actualReps: patch.actualReps == null ? set.actualReps : Number(patch.actualReps),
+      temporary: true
+    }));
+  }
+
+  function selectSet(state, setId) {
+    // 存在进行中组时锁定选组，必须先完成或跳过，避免出现两个 active。
+    const hasActive = state.exercises.flatMap(item => item.sets).some(set => set.status === 'active');
+    const set = findSet(state, setId);
+    // 重复选中已选中的组不构成状态变化：返回同一引用，避免调用方无意义地重建整页。
+    if (setId === state.selectedSetId) return state;
+    return !hasActive && set && set.status === 'pending' ? { ...state, selectedSetId: setId } : state;
+  }
+
+  function addTemporarySet(state, exerciseId) {
+    let changed = false;
+    const exercises = state.exercises.map(exercise => {
+      if (exercise.id !== exerciseId) return exercise;
+      // 没有任何组时没有可复制的模板，保持原状态，避免生成 id 为 -Infinity、缺计划值的畸形组。
+      const source = exercise.sets.at(-1);
+      if (!source) return exercise;
+      changed = true;
+      const suffix = Math.max(...exercise.sets.map(set => Number(set.id.split('-').at(-1)))) + 1;
+      return {
+        ...exercise,
+        sets: [...exercise.sets, {
+          ...source,
+          id: `${exercise.id}-${suffix}`,
+          status: 'pending',
+          durationSeconds: 0,
+          temporary: true
+        }]
+      };
+    });
+    // 未匹配到动作或该动作无组时对象身份不变，调用方可安全跳过重建。
+    return changed ? { ...state, exercises } : state;
+  }
+
+  function startSelectedSet(state, nowMs) {
+    const selected = findSet(state, state.selectedSetId);
+    if (!selected || selected.status !== 'pending') return state;
+    const cleared = {
+      ...state,
+      exercises: state.exercises.map(exercise => ({
+        ...exercise,
+        sets: exercise.sets.map(set => set.status === 'active' ? { ...set, status: 'pending' } : set)
+      }))
+    };
+    const started = updateSet(cleared, state.selectedSetId, set => ({ ...set, status: 'active' }));
+    return { ...started, activeSetStartedAt: nowMs, sessionStatus: 'active' };
+  }
+
+  function completeSelectedSet(state, nowMs) {
+    const selected = findSet(state, state.selectedSetId);
+    if (!selected || selected.status !== 'active') return state;
+    const durationSeconds = Math.max(0, Math.floor((nowMs - state.activeSetStartedAt) / 1000));
+    const completed = updateSet(state, selected.id, set => ({ ...set, status: 'completed', durationSeconds }));
+    return { ...completed, screen: 'rest', sessionStatus: 'resting', activeSetStartedAt: null, restStartedAt: nowMs };
+  }
+
+  function nextPendingSet(state) {
+    return state.exercises.flatMap(item => item.sets).find(set => set.status === 'pending');
+  }
+
+  function startNextSet(state, nowMs) {
+    const next = nextPendingSet(state);
+    if (!next) return state;
+    return startSelectedSet({ ...state, screen: 'workout', selectedSetId: next.id, restStartedAt: null }, nowMs);
+  }
+
+  // 休息中选择其他未完成组：只有仍在休息阶段、且目标组仍 pending 时才可另选；
+  // 否则会在训练进行中或已结束后打断会话，破坏「完成一组才进入休息」的状态机。
+  function chooseNextSet(state, setId, nowMs) {
+    if (state.sessionStatus !== 'resting') return state;
+    const chosen = findSet(state, setId);
+    if (!chosen || chosen.status !== 'pending') return state;
+    return startSelectedSet({ ...state, screen: 'workout', selectedSetId: setId, restStartedAt: null }, nowMs);
+  }
+
+  function skipSelectedSet(state) {
+    const selected = findSet(state, state.selectedSetId);
+    if (!selected || !['pending', 'active'].includes(selected.status)) return state;
+    const skipped = updateSet(state, selected.id, set => ({ ...set, status: 'skipped' }));
+    const next = nextPendingSet(skipped);
+    return { ...skipped, selectedSetId: next ? next.id : state.selectedSetId, activeSetStartedAt: null };
+  }
+
+  function canSaveWorkout(state) {
+    return getWorkoutStats(state).completed > 0;
+  }
+
+  function finishWorkout(state, nowMs) {
+    // 已在总结阶段说明已完成一次收束：重复保存（如双击）必须幂等，
+    // 否则会用新的 nowMs 重算用时，让总结里的总时长发生漂移。
+    if (state.sessionStatus === 'summary') return state;
+    if (!canSaveWorkout(state)) return state;
+    const exercises = state.exercises.map(exercise => ({
+      ...exercise,
+      sets: exercise.sets.map(set => ['pending', 'active'].includes(set.status) ? { ...set, status: 'skipped' } : set)
+    }));
+    const finished = { ...state, exercises, screen: 'summary', sessionStatus: 'summary', activeSetStartedAt: null, restStartedAt: null };
+    return {
+      ...finished,
+      completedSummary: { ...getWorkoutStats(finished), workoutSeconds: deriveTimers(state, nowMs).workoutSeconds }
+    };
+  }
+
+  // 总结备注与界面 textarea 共用同一上限，避免外部调用绕过 300 字约束。
+  function setNotes(state, notes) {
+    return { ...state, notes: notes == null ? '' : String(notes).slice(0, 300) };
+  }
+
+  // 完成归档：保留 completedSummary/notes/exercises，仅把会话推进到 completed 并回到今日。
+  function completeSession(state) {
+    if (state.sessionStatus !== 'summary' || !state.completedSummary) return state;
+    return { ...state, screen: 'today', sessionStatus: 'completed' };
+  }
+
+  // 放弃训练回到全新空闲状态，但保留用户当前主题，不触碰 localStorage。
+  function discardWorkout(state) {
+    return { ...createInitialState(), theme: state.theme };
+  }
+
+  function deriveTimers(state, nowMs) {
+    // 外部 API 边界：起点或当前时间非有限时统一按 0 处理，避免 NaN 泄漏到界面。
+    const now = Number.isFinite(nowMs) ? nowMs : 0;
+    const elapsed = start => Number.isFinite(start) ? Math.max(0, Math.floor((now - start) / 1000)) : 0;
+    const workoutSeconds = elapsed(state.workoutStartedAt);
+    const setSeconds = elapsed(state.activeSetStartedAt);
+    const restSeconds = elapsed(state.restStartedAt);
+    const restTarget = Number.isFinite(state.restTargetSeconds) ? state.restTargetSeconds : 0;
+    return {
+      workoutSeconds,
+      setSeconds,
+      restSeconds,
+      restRemainingSeconds: Math.max(0, restTarget - restSeconds),
+      restOvertimeSeconds: Math.max(0, restSeconds - restTarget)
+    };
+  }
+
+  return {
+    createInitialState,
+    resolveTheme,
+    setTheme,
+    formatDuration,
+    getWorkoutStats,
+    prepareWorkout,
+    startWorkout,
+    toggleExercise,
+    editSet,
+    selectSet,
+    addTemporarySet,
+    startSelectedSet,
+    completeSelectedSet,
+    startNextSet,
+    chooseNextSet,
+    skipSelectedSet,
+    canSaveWorkout,
+    finishWorkout,
+    setNotes,
+    completeSession,
+    discardWorkout,
+    deriveTimers
+  };
+});
+  </script>
+  <script id="prototype-controller">
+(function () {
+  const Core = window.FitnessPrototypeCore;
+  const STORAGE_KEY = 'fitness-theme';
+  const THEME_ORDER = ['a', 'b', 'c'];
+  const THEME_LABELS = { a: '呼吸节拍', b: '训练贴纸册', c: '夜训仪表' };
+  // 组状态的四态复合表达：文本 + 形状标记 + data-state，避免只靠颜色区分。
+  const SET_STATUS_LABEL = { pending: '未开始', active: '进行中', completed: '已完成', skipped: '已跳过' };
+  const SET_STATUS_MARK = { pending: '○', active: '◐', completed: '●', skipped: '—' };
+  const SET_STATUS_RADIUS = { pending: 4, active: 6, completed: 5, skipped: 3.5 };
+  const WORKOUT_PLAN = {
+    name: '推力与核心',
+    source: '上肢三日循环 · D2',
+    phases: ['热身', '主训练', '收尾']
+  };
+  const DEMO_STATS = { totalDays: 28, weekDays: 3, monthDays: 8 };
+  const SECONDS_PER_SET_ESTIMATE = 210;
+  // 休息环几何：viewBox 120×120，半径 52。周长用于 stroke-dashoffset 进度换算。
+  const REST_RING_RADIUS = 52;
+  const REST_RING_CIRCUMFERENCE = 2 * Math.PI * REST_RING_RADIUS;
+  const REST_TICK_COUNT = 12;
+
+  const shell = document.getElementById('app-shell');
+  const screenRoot = document.getElementById('screen-root');
+  const themeSwitcher = document.getElementById('theme-switcher');
+  const liveStatus = document.getElementById('live-status');
+  const jumpRestButton = document.getElementById('demo-jump-rest');
+
+  let themeMenuOpen = false;
+  // 覆盖层界面状态：结束 Bottom Sheet、放弃二次确认、今日完成卡的总结展开。
+  // 它们只是界面覆盖，不进入 core 业务状态，关闭即完全清除。
+  const uiState = { endSheetOpen: false, discardDialogOpen: false, completedSummaryOpen: false };
+  // 训练页的纯界面状态：正在编辑的组。它不进入 core 业务状态。
+  let editingSetId = null;
+  // 打开结束 Sheet 的触发元素选择器：关闭 Sheet 后焦点回到原「结束」入口。
+  let endSheetReturnFocus = '[data-role="end-trigger"]';
+  // 休息页纯界面状态：选组面板是否展开；达标反馈是否已播报（保证只反馈一次）。
+  let choosingNext = false;
+  let restTargetAnnounced = false;
+  // 下一次 render 完成后需要落焦的目标；仅在用户主动操作时设置，初始渲染保持 null（不抢焦点）。
+  // 值为 CSS 选择器；旧的主题菜单意图名通过 FOCUS_TARGETS 映射，保持 Task 3 的调用点不变。
+  let pendingFocus = null;
+  const FOCUS_TARGETS = {
+    'theme-option': '#theme-menu [data-theme-choice]',
+    'theme-trigger': '[data-ui="toggle-theme-menu"]'
+  };
+
+  function readStoredTheme() {
+    try {
+      return localStorage.getItem(STORAGE_KEY);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function storeTheme(theme) {
+    try {
+      localStorage.setItem(STORAGE_KEY, theme);
+    } catch (error) {
+      /* file:// 或隐私模式下写入可能被拒绝，忽略即可，不影响渲染。 */
+    }
+  }
+
+  let state = Core.createInitialState(Date.now());
+  state = Core.setTheme(state, Core.resolveTheme(readStoredTheme()));
+
+  function announce(message) {
+    liveStatus.textContent = message;
+  }
+
+  function formatDateLabel(now) {
+    const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+    return `${now.getMonth() + 1} 月 ${now.getDate()} 日 · 星期${weekdays[now.getDay()]}`;
+  }
+
+  // 任何要拼进 innerHTML 的动态文本都必须先转义：状态里的备注、动作名等可能包含
+  // `& < > " '`，不转义会破坏 DOM 结构甚至执行注入的脚本（self-XSS）。
+  // core 只保存原文，转义只发生在渲染边界。
+  function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function iconSvg(name) {
+    const paths = {
+      palette: '<path d="M12 3a9 9 0 1 0 0 18h1.2a1.8 1.8 0 0 0 1.3-3.05 1.8 1.8 0 0 1 1.3-3.05H18A3 3 0 0 0 21 12a9 9 0 0 0-9-9Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="8" cy="10" r="1.3" fill="currentColor"/><circle cx="12" cy="7.6" r="1.3" fill="currentColor"/><circle cx="16" cy="10" r="1.3" fill="currentColor"/>',
+      today: '<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.4" fill="currentColor"/>',
+      plan: '<path d="M5 7h14M5 12h14M5 17h9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+      calendar: '<rect x="4" y="5.5" width="16" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 10h16M8.5 3.8v3.2M15.5 3.8v3.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+      moves: '<path d="M4 9v6M20 9v6M7 7v10M17 7v10M7 12h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+      back: '<path d="M15 5.5 8.5 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>',
+      chevron: '<path d="M6.5 9.5 12 15l5.5-5.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>',
+      grip: '<path d="M9.5 7h.01M14.5 7h.01M9.5 12h.01M14.5 12h.01M9.5 17h.01M14.5 17h.01" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>'
+    };
+    return `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">${paths[name]}</svg>`;
+  }
+
+  function renderThemeSwitcher() {
+    themeSwitcher.innerHTML = THEME_ORDER.map(id => `
+      <button type="button" class="theme-button" data-theme-choice="${id}" aria-pressed="${state.theme === id}">
+        <span class="theme-button__swatch swatch--${id}" aria-hidden="true"></span>
+        <span>${THEME_LABELS[id]}${id === 'a' ? '（默认）' : ''}</span>
+      </button>
+    `).join('');
+  }
+
+  function renderRhythm() {
+    return `
+      <figure class="rhythm" role="img" aria-label="训练节拍：${escapeHtml(WORKOUT_PLAN.phases.join('、'))}三个阶段">
+        <svg class="rhythm__track" viewBox="0 0 300 12" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <line class="rhythm__line" x1="6" y1="6" x2="294" y2="6"></line>
+          <circle class="rhythm__node" cx="6" cy="6" r="5"></circle>
+          <circle class="rhythm__node rhythm__node--mid" cx="150" cy="6" r="5"></circle>
+          <circle class="rhythm__node" cx="294" cy="6" r="5"></circle>
+        </svg>
+        <figcaption class="rhythm__legend">
+          ${WORKOUT_PLAN.phases.map(phase => `<span>${escapeHtml(phase)}</span>`).join('')}
+        </figcaption>
+      </figure>
+    `;
+  }
+
+  function renderStats() {
+    const items = [
+      { value: DEMO_STATS.totalDays, label: '累计天数' },
+      { value: DEMO_STATS.weekDays, label: '本周训练' },
+      { value: DEMO_STATS.monthDays, label: '本月训练' }
+    ];
+    return `
+      <section class="stats" aria-label="训练统计">
+        ${items.map(item => `
+          <div class="stat">
+            <span class="stat__value">${item.value}</span>
+            <span class="stat__label">${item.label}</span>
+          </div>
+        `).join('')}
+      </section>
+    `;
+  }
+
+  function renderExerciseSummary() {
+    const items = state.exercises.map((exercise, index) => {
+      const weight = exercise.sets[0] ? exercise.sets[0].plannedWeight : 0;
+      return `
+        <li class="exercise">
+          <span class="exercise__index" aria-hidden="true">${String(index + 1).padStart(2, '0')}</span>
+          <span class="exercise__body">
+            <span class="exercise__name">${escapeHtml(exercise.name)}</span>
+            <span class="exercise__meta">${exercise.sets.length} 组 · ${weight} kg</span>
+          </span>
+        </li>
+      `;
+    }).join('');
+    const totalSets = state.exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0);
+    return `
+      <section class="section">
+        <div class="section__head">
+          <h3 class="section__title">今日动作</h3>
+          <span class="section__meta">${totalSets} 组</span>
+        </div>
+        <ul class="exercise-list">${items}</ul>
+      </section>
+    `;
+  }
+
+  function renderBottomNav() {
+    const items = [
+      { id: 'today', label: '今日', icon: 'today', current: true },
+      { id: 'plan', label: '计划', icon: 'plan' },
+      { id: 'calendar', label: '日历', icon: 'calendar' },
+      { id: 'moves', label: '动作', icon: 'moves' }
+    ];
+    return `
+      <nav class="bottom-nav" aria-label="主导航">
+        ${items.map(item => `
+          <button type="button" class="bottom-nav__item"
+            ${item.current ? 'aria-current="page"' : 'aria-disabled="true"'}>
+            ${iconSvg(item.icon)}
+            <span>${item.label}</span>
+          </button>
+        `).join('')}
+      </nav>
+    `;
+  }
+
+  function renderThemeMenu() {
+    return `
+      <div class="theme-menu" id="theme-menu" role="group" aria-label="选择界面风格" ${themeMenuOpen ? '' : 'hidden'}>
+        ${THEME_ORDER.map(id => `
+          <button type="button" class="theme-option" data-theme-choice="${id}" aria-pressed="${state.theme === id}">
+            <span class="theme-option__swatch swatch--${id}" aria-hidden="true"></span>
+            <span>${THEME_LABELS[id]}${id === 'a' ? ' · 默认' : ''}</span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // 移动端主题入口：任何需要主题切换的页面顶栏都复用同一按钮语义，避免复制粘贴走样。
+  function themeTriggerButton() {
+    return `
+      <button type="button" class="icon-button" data-ui="toggle-theme-menu"
+        aria-label="界面风格" aria-controls="theme-menu" aria-expanded="${themeMenuOpen}">
+        ${iconSvg('palette')}
+      </button>
+    `;
+  }
+
+  function renderCompletedCard() {
+    const summary = state.completedSummary || {};
+    const note = state.notes ? state.notes : '本次没有留下备注';
+    return `
+      <article class="completed-card">
+        <span class="completed-card__eyebrow">本次训练已完成</span>
+        <h3 class="completed-card__title">${escapeHtml(WORKOUT_PLAN.name)}</h3>
+        <p class="completed-card__meta">用时 ${Core.formatDuration(summary.workoutSeconds || 0)} · 完成 ${summary.completed || 0} 组 · ${summary.completedExercises || 0} 个动作</p>
+        <p class="completed-card__note" data-role="completed-note">${escapeHtml(note)}</p>
+        <div class="actions">
+          <button type="button" class="button button--ghost" data-action="TOGGLE_SUMMARY_VIEW"
+            aria-expanded="${uiState.completedSummaryOpen}" aria-controls="completed-review">
+            ${uiState.completedSummaryOpen ? '收起总结' : '查看总结'}
+          </button>
+        </div>
+      </article>
+      <div class="completed-review" id="completed-review" ${uiState.completedSummaryOpen ? '' : 'hidden'}>${renderSummaryBody(true)}</div>
+    `;
+  }
+
+  function renderToday() {
+    const totalSets = state.exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0);
+    const estimatedMinutes = Math.round(totalSets * SECONDS_PER_SET_ESTIMATE / 60);
+    const completed = state.sessionStatus === 'completed' && state.completedSummary;
+    return `
+      <section class="screen" data-screen="today" aria-labelledby="today-title">
+        <div class="screen__scroll">
+          <header class="today-top">
+            <span class="today-top__date">${formatDateLabel(new Date())}</span>
+            <span class="today-top__right">
+              <span class="page-tag">今日</span>
+              ${themeTriggerButton()}
+            </span>
+          </header>
+
+          <h2 class="screen__title" id="today-title" tabindex="-1">今天练什么</h2>
+
+          ${completed ? renderCompletedCard() : `
+            <article class="hero">
+              <span class="hero__eyebrow">${escapeHtml(WORKOUT_PLAN.source)}</span>
+              <h3 class="hero__title">${escapeHtml(WORKOUT_PLAN.name)}</h3>
+              <p class="hero__meta">${state.exercises.length} 个动作 · ${totalSets} 组 · 约 ${estimatedMinutes} 分钟</p>
+              ${renderRhythm()}
+            </article>
+          `}
+
+          <div class="actions">
+            <button type="button" class="button button--primary" data-action="OPEN_PREPARE">开始今日训练</button>
+            <button type="button" class="button button--ghost" disabled>
+              自由训练<span class="button__hint">从空白清单开始 · 敬请期待</span>
+            </button>
+          </div>
+
+          ${renderStats()}
+          ${renderExerciseSummary()}
+        </div>
+        ${renderBottomNav()}
+      </section>
+    `;
+  }
+
+  function renderPrepareSet(set, index) {
+    return `
+      <li class="prep-set" data-set-row="${set.id}">
+        <div class="prep-set__head">
+          <span class="prep-set__no">第 ${index + 1} 组</span>
+          <span class="prep-set__planned">计划 ${set.plannedWeight} kg × ${set.plannedReps}</span>
+          <span class="prep-set__flag" ${set.temporary ? '' : 'hidden'}>仅本次</span>
+        </div>
+        <div class="prep-set__fields">
+          <div class="prep-set__field">
+            <label class="prep-set__label" for="input-${set.id}-weight"><span class="sr-only">第 ${index + 1} 组</span>实际重量</label>
+            <span class="prep-set__control">
+              <input class="prep-set__input" id="input-${set.id}-weight" type="number" inputmode="decimal" step="0.5" min="0"
+                value="${set.actualWeight}" data-set-id="${set.id}" data-field="weight">
+              <span class="prep-set__unit" aria-hidden="true">kg</span>
+            </span>
+          </div>
+          <div class="prep-set__field">
+            <label class="prep-set__label" for="input-${set.id}-reps"><span class="sr-only">第 ${index + 1} 组</span>实际次数</label>
+            <span class="prep-set__control">
+              <input class="prep-set__input" id="input-${set.id}-reps" type="number" inputmode="numeric" step="1" min="0"
+                value="${set.actualReps}" data-set-id="${set.id}" data-field="reps">
+              <span class="prep-set__unit" aria-hidden="true">次</span>
+            </span>
+          </div>
+        </div>
+      </li>
+    `;
+  }
+
+  function renderPrepareExercise(exercise, index) {
+    const first = exercise.sets[0];
+    const expanded = !exercise.collapsed;
+    return `
+      <article class="prep-exercise">
+        <div class="prep-exercise__head">
+          <button type="button" class="prep-exercise__toggle" data-action="TOGGLE_EXERCISE" data-exercise-id="${exercise.id}"
+            aria-expanded="${expanded}" aria-controls="prep-sets-${exercise.id}">
+            <span class="exercise__index" aria-hidden="true">${String(index + 1).padStart(2, '0')}</span>
+            <span class="exercise__body">
+              <span class="exercise__name">${escapeHtml(exercise.name)}</span>
+              <span class="exercise__meta">${exercise.sets.length} 组 · ${first.plannedWeight} kg × ${first.plannedReps}</span>
+            </span>
+            <span class="prep-exercise__chevron" aria-hidden="true">${iconSvg('chevron')}</span>
+          </button>
+          <button type="button" class="prep-exercise__handle" aria-disabled="true" tabindex="-1"
+            aria-label="拖动排序（正式版提供）" title="拖动排序将在正式版提供">${iconSvg('grip')}</button>
+        </div>
+        <ul class="prep-sets" id="prep-sets-${exercise.id}" ${expanded ? '' : 'hidden'}>
+          ${exercise.sets.map((set, setIndex) => renderPrepareSet(set, setIndex)).join('')}
+        </ul>
+      </article>
+    `;
+  }
+
+  function renderPrepare() {
+    return `
+      <section class="screen" data-screen="prepare" aria-labelledby="prepare-title">
+        <div class="screen__scroll">
+          <header class="prepare-top">
+            <button type="button" class="icon-button" data-action="BACK_TODAY" aria-label="返回今日">
+              ${iconSvg('back')}
+            </button>
+            <span class="today-top__right">
+              <span class="page-tag">准备</span>
+              ${themeTriggerButton()}
+            </span>
+          </header>
+
+          <h2 class="screen__title" id="prepare-title" tabindex="-1">确认本次训练</h2>
+
+          <p class="prepare-source">${escapeHtml(WORKOUT_PLAN.source)}</p>
+          <p class="prepare-note">本次调整不会修改原计划，仅对这次训练生效。组间目标休息 ${state.restTargetSeconds} 秒。</p>
+
+          <div class="prepare-list">
+            ${state.exercises.map((exercise, index) => renderPrepareExercise(exercise, index)).join('')}
+          </div>
+        </div>
+        <div class="prepare-footer">
+          <button type="button" class="button button--primary" data-action="START_WORKOUT">开始训练</button>
+        </div>
+      </section>
+    `;
+  }
+
+  function currentSet(setId) {
+    return state.exercises.flatMap(exercise => exercise.sets).find(set => set.id === setId);
+  }
+
+  function exerciseOfSet(setId) {
+    return state.exercises.find(exercise => exercise.sets.some(set => set.id === setId));
+  }
+
+  // 待训练组按动作与组序的自然顺序展开，供休息页下一组、预览与选择面板共用。
+  function pendingSetEntries() {
+    return state.exercises.flatMap(exercise =>
+      exercise.sets
+        .map((set, index) => ({ exercise, set, index }))
+        .filter(entry => entry.set.status === 'pending')
+    );
+  }
+
+  function restReached(timers) {
+    return timers.restSeconds >= state.restTargetSeconds;
+  }
+
+  function restRingOffset(timers) {
+    const target = state.restTargetSeconds > 0 ? state.restTargetSeconds : 1;
+    const progress = Math.min(1, Math.max(0, timers.restSeconds / target));
+    return REST_RING_CIRCUMFERENCE * (1 - progress);
+  }
+
+  function restStatusText(timers) {
+    if (timers.restOvertimeSeconds > 0) return `已超过 ${Core.formatDuration(timers.restOvertimeSeconds)}`;
+    if (restReached(timers)) return '已达到目标休息时间';
+    return `剩余 ${Core.formatDuration(timers.restRemainingSeconds)}`;
+  }
+
+  function buildRestRingLabel(timers) {
+    const elapsed = `休息 ${Core.formatDuration(timers.restSeconds)}`;
+    if (timers.restOvertimeSeconds > 0) {
+      return `${elapsed}，已超过目标 ${Core.formatDuration(timers.restOvertimeSeconds)}`;
+    }
+    if (restReached(timers)) return `${elapsed}，已达到目标休息时间`;
+    return `${elapsed}，目标 ${Core.formatDuration(state.restTargetSeconds)}，剩余 ${Core.formatDuration(timers.restRemainingSeconds)}`;
+  }
+
+  function renderRestTicks() {
+    return Array.from({ length: REST_TICK_COUNT }, (_, index) => {
+      const angle = (index / REST_TICK_COUNT) * Math.PI * 2;
+      const inner = REST_RING_RADIUS + 3;
+      const outer = REST_RING_RADIUS + 8;
+      const x1 = (60 + Math.cos(angle) * inner).toFixed(2);
+      const y1 = (60 + Math.sin(angle) * inner).toFixed(2);
+      const x2 = (60 + Math.cos(angle) * outer).toFixed(2);
+      const y2 = (60 + Math.sin(angle) * outer).toFixed(2);
+      return `<line class="rest-ring__tick" style="animation-delay:${index * 40}ms" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"></line>`;
+    }).join('');
+  }
+
+  // 功能性环形节拍轨道：未达目标按已休息时间显示进度，达标后固定满环并切换完成形态。
+  function renderRestRing(timers) {
+    const reached = restReached(timers);
+    const celebrate = reached && !restTargetAnnounced;
+    return `
+      <div class="rest-ring${celebrate ? ' rest-ring--celebrate' : ''}" data-role="rest-ring" data-state="${reached ? 'reached' : 'pending'}"
+        role="img" aria-label="${buildRestRingLabel(timers)}">
+        <svg class="rest-ring__svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <g class="rest-ring__ticks">${renderRestTicks()}</g>
+          <circle class="rest-ring__track" cx="60" cy="60" r="${REST_RING_RADIUS}"></circle>
+          <circle class="rest-ring__progress" data-role="rest-ring-progress" cx="60" cy="60" r="${REST_RING_RADIUS}"
+            stroke-dasharray="${REST_RING_CIRCUMFERENCE.toFixed(2)}" stroke-dashoffset="${restRingOffset(timers).toFixed(2)}"></circle>
+        </svg>
+        <span class="rest-ring__readout" aria-hidden="true">
+          <span class="rest-ring__value" data-role="rest-timer">${Core.formatDuration(timers.restSeconds)}</span>
+          <span class="rest-ring__target">目标 ${Core.formatDuration(state.restTargetSeconds)}</span>
+        </span>
+        <span class="rest-ring__badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" focusable="false"><path d="M5.5 12.5 10 17 18.5 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </div>
+    `;
+  }
+
+  // 选组面板常驻渲染、收起时置 hidden：这样「选择其他未完成组」按钮的 aria-controls
+  // 始终指向一个真实存在的节点，不会在收起态悬空。
+  function renderRestChooser(entries) {
+    return `
+      <div class="rest-chooser" id="rest-chooser" role="group" aria-label="选择其他未完成组" ${choosingNext ? '' : 'hidden'}>
+        ${entries.map(({ exercise, set, index }) => `
+          <button type="button" class="rest-chooser__item" data-action="CHOOSE_NEXT_SET" data-set-id="${set.id}">
+            <span class="rest-chooser__name">${escapeHtml(exercise.name)}</span>
+            <span class="rest-chooser__meta">第 ${index + 1} 组 · ${set.plannedWeight} kg × ${set.plannedReps}</span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function renderRest() {
+    const timers = Core.deriveTimers(state, Date.now());
+    const entries = pendingSetEntries();
+    const next = entries[0] || null;
+    const after = entries[1] || null;
+
+    // 没有待训练组时绝不渲染 undefined 下一组，也不把主按钮禁用成死路：
+    // 主按钮改为结束训练（Task 7 接 sheet），并明确说明所有组已处理。
+    const mainAction = next
+      ? '<button type="button" class="button button--primary" data-role="main-action" data-action="START_NEXT_SET">结束休息并开始下一组</button>'
+      : '<button type="button" class="button button--primary" data-role="main-action" data-action="OPEN_END_SHEET">结束训练</button>';
+
+    return `
+      <section class="screen" data-screen="rest" aria-labelledby="rest-title">
+        <div class="screen__scroll">
+          <header class="workout-top">
+            <span class="workout-top__timer">
+              <span class="workout-top__label">训练时长</span>
+              <span class="workout-top__value" data-role="workout-timer">${Core.formatDuration(timers.workoutSeconds)}</span>
+            </span>
+            <span class="workout-top__right">
+              <span class="page-tag">休息</span>
+              ${themeTriggerButton()}
+              <button type="button" class="workout-end" data-role="end-trigger" data-action="OPEN_END_SHEET" aria-label="结束训练">结束</button>
+            </span>
+          </header>
+
+          <h2 class="screen__title" id="rest-title" tabindex="-1">组间休息</h2>
+
+          <div class="rest-timer">
+            ${renderRestRing(timers)}
+            <p class="rest-status" data-role="rest-state">${restStatusText(timers)}</p>
+          </div>
+
+          ${next ? `
+            <section class="rest-section">
+              <div class="section__head">
+                <h3 class="section__title">下一组</h3>
+                <span class="section__meta">还有 ${entries.length} 组待训练</span>
+              </div>
+              <article class="rest-next-card">
+                <span class="rest-next-card__eyebrow">${escapeHtml(next.exercise.name)}</span>
+                <span class="rest-next-card__title">第 ${next.index + 1} 组</span>
+                <span class="rest-next-card__meta">计划 ${next.set.plannedWeight} kg × ${next.set.plannedReps}</span>
+              </article>
+              ${after ? `<p class="rest-preview">再下一组：${escapeHtml(after.exercise.name)} · 第 ${after.index + 1} 组 · ${after.set.plannedWeight} kg × ${after.set.plannedReps}</p>` : ''}
+            </section>
+            <div class="actions">
+              <button type="button" class="button button--ghost" data-action="TOGGLE_NEXT_PANEL"
+                aria-expanded="${choosingNext}" aria-controls="rest-chooser">选择其他未完成组</button>
+            </div>
+            ${renderRestChooser(entries)}
+          ` : `
+            <p class="rest-done-note">所有组都已处理完成。结束训练后可查看本次小结，休息不会自动结束或保存。</p>
+          `}
+        </div>
+        <div class="workout-footer">${mainAction}</div>
+      </section>
+    `;
+  }
+
+  // 线性节拍轨道：当前组序号用于无障碍描述与图例。
+  // 无 active 且无 pending 时不存在「当前组」，返回 null，绝不用已完成+已跳过伪造序号。
+  function trackPosition(stats) {
+    const sets = state.exercises.flatMap(exercise => exercise.sets);
+    const activeIndex = sets.findIndex(set => set.status === 'active');
+    if (activeIndex >= 0) return activeIndex + 1;
+    const selectedIndex = sets.findIndex(set => set.id === state.selectedSetId && set.status === 'pending');
+    if (selectedIndex >= 0) return selectedIndex + 1;
+    const pendingIndex = sets.findIndex(set => set.status === 'pending');
+    if (pendingIndex >= 0) return pendingIndex + 1;
+    return null;
+  }
+
+  // 已完成 x 组，共 y 组，当前第 z 组；没有当前组时不谎报序号。
+  function buildTrackLabel(stats) {
+    const position = trackPosition(stats);
+    const current = position ? `当前第 ${position} 组` : '当前无待训练组';
+    return `已完成 ${stats.completed} 组，共 ${stats.total} 组，${current}`;
+  }
+
+  function renderRhythmTrack(stats, mode) {
+    const sets = state.exercises.flatMap(exercise => exercise.sets);
+    const nodes = sets.map((set, index) => {
+      const x = sets.length <= 1 ? 150 : 8 + (284 * index) / (sets.length - 1);
+      const radius = SET_STATUS_RADIUS[set.status] || 4;
+      return `<circle class="rhythm__node rhythm__node--${set.status}" data-state="${set.status}" cx="${x.toFixed(1)}" cy="6" r="${radius}"></circle>`;
+    }).join('');
+    const position = trackPosition(stats);
+    const current = position ? `当前第 ${position} 组` : '当前无待训练组';
+    return `
+      <figure class="rhythm rhythm--${mode}" role="img" aria-label="${buildTrackLabel(stats)}" data-role="rhythm-track">
+        <svg class="rhythm__track rhythm__track--${mode}" viewBox="0 0 300 12" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <line class="rhythm__line" x1="6" y1="6" x2="294" y2="6"></line>
+          ${nodes}
+        </svg>
+        <figcaption class="rhythm__legend">
+          <span data-role="completed-count">完成 ${stats.completed} / ${stats.total} 组</span>
+          <span>${stats.skipped ? `跳过 ${stats.skipped} · ` : ''}${current}</span>
+        </figcaption>
+      </figure>
+    `;
+  }
+
+  function renderWorkoutSet(set, index) {
+    const selected = set.id === state.selectedSetId;
+    const selectable = set.status === 'pending';
+    // 只有可选择的 pending 行才谈「已选中」（aria-pressed）；
+    // 进行中行用 aria-current="step" 表达「当前组」，避免 aria-pressed 与 aria-disabled 同时为真。
+    const pressed = selectable ? `aria-pressed="${selected}"` : '';
+    const current = set.status === 'active' ? 'aria-current="step"' : '';
+    const disabled = selectable ? '' : 'aria-disabled="true"';
+    return `
+      <li class="workout-set" data-set-row="${set.id}">
+        <button type="button" class="workout-set__row" data-state="${set.status}"
+          data-action="SELECT_SET" data-set-id="${set.id}"
+          ${pressed} ${current} ${disabled}>
+          <span class="workout-set__no">第 ${index + 1} 组</span>
+          <span class="workout-set__status">
+            <span class="workout-set__mark" aria-hidden="true">${SET_STATUS_MARK[set.status] || '○'}</span>
+            <span>${SET_STATUS_LABEL[set.status] || '未开始'}</span>
+          </span>
+          <span class="workout-set__right">
+            <span class="workout-set__temp" data-role="temp-flag" ${set.temporary ? '' : 'hidden'}>临时</span>
+            ${set.status === 'active' ? '<span class="workout-set__timer" data-role="set-timer">00:00</span>' : ''}
+          </span>
+          <span class="workout-set__values">
+            <span class="workout-set__planned">计划 ${set.plannedWeight} kg × ${set.plannedReps}</span>
+            <span class="workout-set__actual" data-role="actual">实际 ${set.actualWeight} kg × ${set.actualReps}</span>
+          </span>
+        </button>
+      </li>
+    `;
+  }
+
+  function renderWorkoutExercise(exercise, index) {
+    const done = exercise.sets.filter(set => set.status === 'completed').length;
+    return `
+      <section class="workout-group">
+        <div class="workout-group__head">
+          <span class="exercise__index" aria-hidden="true">${String(index + 1).padStart(2, '0')}</span>
+          <span class="exercise__body">
+            <span class="exercise__name">${escapeHtml(exercise.name)}</span>
+            <span class="exercise__meta">${done} / ${exercise.sets.length} 组完成</span>
+          </span>
+        </div>
+        <ul class="workout-sets">
+          ${exercise.sets.map((set, setIndex) => renderWorkoutSet(set, setIndex)).join('')}
+        </ul>
+      </section>
+    `;
+  }
+
+  function renderSetEditor(set, index) {
+    return `
+      <div class="set-editor" data-editor-for="${set.id}">
+        <div class="set-editor__head">
+          <span class="set-editor__title">修改第 ${index + 1} 组数据</span>
+          <span class="prep-set__flag">仅本次</span>
+        </div>
+        <div class="prep-set__fields">
+          <div class="prep-set__field">
+            <label class="prep-set__label" for="workout-edit-${set.id}-weight">实际重量</label>
+            <span class="prep-set__control">
+              <input class="prep-set__input" id="workout-edit-${set.id}-weight" type="number" inputmode="decimal" step="0.5" min="0"
+                value="${set.actualWeight}" data-set-id="${set.id}" data-field="weight">
+              <span class="prep-set__unit" aria-hidden="true">kg</span>
+            </span>
+          </div>
+          <div class="prep-set__field">
+            <label class="prep-set__label" for="workout-edit-${set.id}-reps">实际次数</label>
+            <span class="prep-set__control">
+              <input class="prep-set__input" id="workout-edit-${set.id}-reps" type="number" inputmode="numeric" step="1" min="0"
+                value="${set.actualReps}" data-set-id="${set.id}" data-field="reps">
+              <span class="prep-set__unit" aria-hidden="true">次</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderWorkout() {
+    const stats = Core.getWorkoutStats(state);
+    const now = Date.now();
+    const timers = Core.deriveTimers(state, now);
+    const selected = currentSet(state.selectedSetId);
+    const hasActive = stats.active > 0;
+    const exercise = exerciseOfSet(state.selectedSetId) || state.exercises[0];
+    const editable = selected && ['pending', 'active'].includes(selected.status);
+    const selectedIndex = exercise ? exercise.sets.findIndex(set => set.id === state.selectedSetId) : 0;
+
+    let mainAction;
+    if (hasActive) {
+      mainAction = '<button type="button" class="button button--primary" data-role="main-action" data-action="COMPLETE_SET">完成本组</button>';
+    } else if (selected && selected.status === 'pending') {
+      mainAction = '<button type="button" class="button button--primary" data-role="main-action" data-action="START_SET">开始本组</button>';
+    } else {
+      mainAction = '<button type="button" class="button button--primary" data-role="main-action" disabled>没有待训练组</button>';
+    }
+
+    return `
+      <section class="screen" data-screen="workout" aria-labelledby="workout-title">
+        <div class="screen__scroll">
+          <header class="workout-top">
+            <span class="workout-top__timer">
+              <span class="workout-top__label">训练时长</span>
+              <span class="workout-top__value" data-role="workout-timer">${Core.formatDuration(timers.workoutSeconds)}</span>
+            </span>
+            <span class="workout-top__right">
+              <span class="page-tag">训练</span>
+              ${themeTriggerButton()}
+              <button type="button" class="workout-end" data-role="end-trigger" data-action="OPEN_END_SHEET" aria-label="结束训练">结束</button>
+            </span>
+          </header>
+
+          <h2 class="screen__title" id="workout-title" tabindex="-1">${state.exercises.length} 个动作</h2>
+
+          ${renderRhythmTrack(stats, 'linear')}
+
+          <div class="workout-groups">
+            ${state.exercises.map((item, index) => renderWorkoutExercise(item, index)).join('')}
+          </div>
+
+          <div class="actions workout-secondary">
+            <button type="button" class="button button--ghost" data-action="EDIT_CURRENT" ${editable ? '' : 'disabled'}>修改数据</button>
+            <button type="button" class="button button--ghost" data-action="SKIP_SET" ${editable ? '' : 'disabled'}>跳过本组</button>
+            <button type="button" class="button button--ghost" data-action="ADD_SET" ${exercise ? `data-exercise-id="${exercise.id}"` : 'disabled'}>添加组</button>
+          </div>
+
+          ${editingSetId && selected && editable ? renderSetEditor(selected, Math.max(0, selectedIndex)) : ''}
+        </div>
+        <div class="workout-footer">${mainAction}</div>
+      </section>
+    `;
+  }
+
+  // 总结正文：总结页与今日完成卡的只读展开共用同一份统计口径，
+  // review=true 时不渲染可编辑备注，也不重复展示总时长引导卡。
+  function renderSummaryBody(review) {
+    const summary = state.completedSummary || {};
+    const completed = summary.completed || 0;
+    const skipped = summary.skipped || 0;
+    const unfinished = (summary.pending || 0) + (summary.active || 0);
+    const exerciseItems = state.exercises.map(exercise => {
+      const done = exercise.sets.filter(set => set.status === 'completed').length;
+      const skippedSets = exercise.sets.filter(set => set.status === 'skipped').length;
+      return `
+        <li class="summary-item">
+          <span class="summary-item__name">${escapeHtml(exercise.name)}</span>
+          <span class="summary-item__meta">完成 ${done} / ${exercise.sets.length} 组${skippedSets ? ` · 跳过 ${skippedSets}` : ''}</span>
+        </li>
+      `;
+    }).join('');
+
+    // 备注是用户可控文本：core 存原文，渲染时一律转义，既保证只读展示安全，
+    // 也避免 `</textarea>` 提前闭合破坏后续 DOM。
+    const noteText = state.notes ? state.notes : '本次没有留下备注';
+
+    const notes = review
+      ? `<div class="summary-notes">
+          <div class="summary-notes__head"><span class="summary-notes__label">训练备注</span></div>
+          <p class="summary-item__meta" data-role="notes-readonly">${escapeHtml(noteText)}</p>
+        </div>`
+      : `<div class="summary-notes">
+          <div class="summary-notes__head">
+            <label class="summary-notes__label" for="summary-notes">训练备注</label>
+            <span class="summary-notes__count" data-role="notes-count">${state.notes.length} / 300</span>
+          </div>
+          <textarea class="summary-notes__input" id="summary-notes" data-role="notes" maxlength="300"
+            placeholder="记录本次训练的感受或调整（可选）">${escapeHtml(state.notes)}</textarea>
+        </div>`;
+
+    const lead = review ? '' : `
+      <div class="summary-lead">
+        <span class="summary-lead__eyebrow">${escapeHtml(WORKOUT_PLAN.source)}</span>
+        <span class="summary-lead__value" data-role="summary-duration">${Core.formatDuration(summary.workoutSeconds || 0)}</span>
+        <span class="summary-lead__meta">总时长 · 完成 ${summary.completedExercises || 0} 个动作</span>
+      </div>
+    `;
+
+    return `
+      ${lead}
+      <section class="stats summary-stats" aria-label="本次训练统计">
+        <div class="stat"><span class="stat__value">${completed}</span><span class="stat__label">完成组</span></div>
+        <div class="stat"><span class="stat__value">${skipped}</span><span class="stat__label">跳过组</span></div>
+        <div class="stat"><span class="stat__value">${unfinished}</span><span class="stat__label">未完成组</span></div>
+      </section>
+      ${renderRhythmTrack(Core.getWorkoutStats(state), 'closing')}
+      <section class="section">
+        <div class="section__head"><h3 class="section__title">动作摘要</h3><span class="section__meta">${state.exercises.length} 个动作</span></div>
+        <ul class="summary-list">${exerciseItems}</ul>
+      </section>
+      ${notes}
+    `;
+  }
+
+  function renderSummary() {
+    return `
+      <section class="screen" data-screen="summary" aria-labelledby="summary-title">
+        <div class="screen__scroll">
+          <header class="prepare-top"><span class="page-tag">总结</span></header>
+          <h2 class="screen__title" id="summary-title" tabindex="-1">本次训练总结</h2>
+          ${renderSummaryBody(false)}
+        </div>
+        <div class="summary-footer">
+          <button type="button" class="button button--primary" data-action="COMPLETE_SESSION">完成</button>
+        </div>
+      </section>
+    `;
+  }
+
+  // 结束 Bottom Sheet：训练页与休息页共用同一入口，背景保持当前训练/休息上下文可见。
+  function renderEndSheet() {
+    const stats = Core.getWorkoutStats(state);
+    const timers = Core.deriveTimers(state, Date.now());
+    const remaining = stats.pending + stats.active;
+    const canSave = Core.canSaveWorkout(state);
+    return `
+      <div class="overlay-layer${uiState.discardDialogOpen ? ' overlay-layer--dialog' : ''}" data-role="overlay-layer">
+        <div class="overlay-mask" data-action="${uiState.discardDialogOpen ? 'CLOSE_DISCARD_CONFIRM' : 'CLOSE_END_SHEET'}" aria-hidden="true"></div>
+        <div class="end-sheet" id="end-sheet" role="dialog" aria-modal="true" aria-labelledby="end-sheet-title">
+          <div class="end-sheet__head">
+            <h2 class="end-sheet__title" id="end-sheet-title" tabindex="-1">结束本次训练？</h2>
+            <p class="end-sheet__hint">${canSave ? '保存后进入训练总结，其余未完成组将标为跳过。' : '还没有完成任何一组。'}</p>
+          </div>
+          <div class="sheet-metrics">
+            <div class="sheet-metric"><span class="sheet-metric__value">${Core.formatDuration(timers.workoutSeconds)}</span><span class="sheet-metric__label">总训练时长</span></div>
+            <div class="sheet-metric"><span class="sheet-metric__value">${stats.completedExercises}</span><span class="sheet-metric__label">完成动作</span></div>
+            <div class="sheet-metric"><span class="sheet-metric__value">${stats.completed}</span><span class="sheet-metric__label">已完成组</span></div>
+            <div class="sheet-metric"><span class="sheet-metric__value">${remaining}</span><span class="sheet-metric__label">剩余组</span></div>
+          </div>
+          ${canSave ? '' : '<p class="end-sheet__hint" data-role="save-hint">至少完成一组后才能保存训练</p>'}
+          <div class="sheet-actions">
+            <button type="button" class="button button--primary" data-action="SAVE_PARTIAL" ${canSave ? '' : 'disabled'}>保存并结束训练</button>
+            <button type="button" class="button button--ghost" data-action="CLOSE_END_SHEET">返回继续训练</button>
+            <button type="button" class="button button--ghost" data-action="OPEN_DISCARD_CONFIRM">放弃本次训练</button>
+          </div>
+        </div>
+        ${uiState.discardDialogOpen ? renderDiscardDialog() : ''}
+      </div>
+    `;
+  }
+
+  // 放弃二次确认：默认焦点落在安全的「返回训练」，确认放弃才真正丢弃数据。
+  function renderDiscardDialog() {
+    return `
+      <div class="discard-dialog" id="discard-dialog" role="alertdialog" aria-modal="true"
+        aria-labelledby="discard-dialog-title" aria-describedby="discard-dialog-desc">
+        <h2 class="discard-dialog__title" id="discard-dialog-title">放弃本次训练？</h2>
+        <p class="discard-dialog__desc" id="discard-dialog-desc">已完成的组、计时与备注都会丢失，且无法恢复。</p>
+        <div class="discard-dialog__actions">
+          <button type="button" class="button button--primary" data-role="discard-cancel" data-action="CLOSE_DISCARD_CONFIRM">返回训练</button>
+          <button type="button" class="button button--ghost" data-action="CONFIRM_DISCARD">确认放弃</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // rest / summary 已由专门渲染接管，这里只承接未知 screen 的安全占位。
+  function renderPlaceholder() {
+    const labels = { workout: '训练', rest: '休息', summary: '小结' };
+    const label = labels[state.screen] || '训练';
+    return `
+      <section class="screen" data-screen="${state.screen}" aria-labelledby="placeholder-title">
+        <div class="screen__scroll">
+          <header class="prepare-top">
+            <span class="page-tag">${label}</span>
+          </header>
+          <h2 class="screen__title" id="placeholder-title" tabindex="-1">${label}页</h2>
+          <p class="placeholder-note">该页面将在后续任务实现，当前仅完成状态切换。</p>
+        </div>
+      </section>
+    `;
+  }
+
+  function screenMarkup() {
+    let markup;
+    if (state.screen === 'today') markup = renderToday();
+    else if (state.screen === 'prepare') markup = renderPrepare();
+    else if (state.screen === 'workout') markup = renderWorkout();
+    else if (state.screen === 'rest') markup = renderRest();
+    else if (state.screen === 'summary') markup = renderSummary();
+    else markup = renderPlaceholder();
+    // 主题菜单在此全局渲染一次，所有屏幕共享同一 #theme-menu，避免各屏各自复制导致 id 冲突。
+    return markup + renderThemeMenu() + (uiState.endSheetOpen ? renderEndSheet() : '');
+  }
+
+  // render() 会用 innerHTML 重建 #screen-root，被点击的元素连同焦点一起销毁，
+  // 因此需要重建后再显式迁移焦点。
+  function applyPendingFocus() {
+    if (!pendingFocus) return;
+    const target = document.querySelector(FOCUS_TARGETS[pendingFocus] || pendingFocus);
+    pendingFocus = null;
+    if (target) target.focus();
+  }
+
+  // 数字输入是系统边界：空值/非有限值只留在界面上，不写入状态。
+  // 这里读出编辑值并做统一校验，返回 null 表示「本次不提交」。
+  function sanitizeEditValue(raw) {
+    if (raw === null || raw === undefined) return null;
+    const text = String(raw).trim();
+    if (text === '') return null;
+    const value = Number(text);
+    return Number.isFinite(value) ? value : null;
+  }
+
+  function readSetEdit(input) {
+    const setId = input.getAttribute('data-set-id');
+    const field = input.getAttribute('data-field');
+    if (field !== 'weight' && field !== 'reps') return null;
+    const raw = input.value.trim();
+    if (raw === '') {
+      // 空值提交：从当前 state 回写实际值，保持所见即所用，避免 UI/state 分叉。
+      const set = currentSet(setId);
+      if (set) input.value = String(field === 'weight' ? set.actualWeight : set.actualReps);
+      return null;
+    }
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return null;
+    return { setId, patch: field === 'weight' ? { actualWeight: value } : { actualReps: value } };
+  }
+
+  function syncSetEditDom(setId) {
+    const set = currentSet(setId);
+    if (!set) return;
+    screenRoot.querySelectorAll(`[data-set-row="${setId}"] .prep-set__flag`).forEach(flag => { flag.hidden = !set.temporary; });
+    const temp = screenRoot.querySelector(`[data-set-row="${setId}"] [data-role="temp-flag"]`);
+    if (temp) temp.hidden = !set.temporary;
+    const actual = screenRoot.querySelector(`[data-set-row="${setId}"] [data-role="actual"]`);
+    if (actual) actual.textContent = `实际 ${set.actualWeight} kg × ${set.actualReps}`;
+  }
+
+  // 统一的编辑落库路径：只有非空且 Number.isFinite 的值才会进入 core。
+  function applySetEdit(setId, patch) {
+    state = Core.editSet(state, setId, patch);
+    // 局部同步，避免整页重建打断连续编辑与 Tab 顺序。
+    syncSetEditDom(setId);
+    announce('已记录本次调整，仅本次生效');
+  }
+
+  function commitSetEdit(input) {
+    const edit = readSetEdit(input);
+    if (!edit) return;
+    applySetEdit(edit.setId, edit.patch);
+  }
+
+  function render() {
+    document.documentElement.setAttribute('data-theme', state.theme);
+    shell.setAttribute('data-theme', state.theme);
+    renderThemeSwitcher();
+    // 桌面演示栏的「跳至目标前 3 秒」只在休息状态出现（≤520px 时整个演示栏隐藏）。
+    jumpRestButton.hidden = state.screen !== 'rest';
+    screenRoot.innerHTML = screenMarkup();
+    // 覆盖层打开时把背景屏设为 inert：视觉仍可辨，但不能被误操作或被读屏当成活动内容。
+    // 覆盖层与背景屏是兄弟节点，inert 只加在背景屏上，随每次重建重新计算，不会永久残留。
+    if (uiState.endSheetOpen) {
+      const background = screenRoot.querySelector('.screen');
+      if (background) background.inert = true;
+      // 二次确认打开时，被盖在下面的结束 Sheet 也必须 inert：遮罩虽已抬到 Sheet 之上，
+      // 但这里再禁一次，确保鼠标、键盘与辅助技术都无法越过弹窗触发底层的保存/关闭。
+      if (uiState.discardDialogOpen) {
+        const sheet = screenRoot.querySelector('#end-sheet');
+        if (sheet) sheet.inert = true;
+      }
+    }
+    applyPendingFocus();
+  }
+
+  // 离开/重置休息时清除一次性界面标志，避免下一轮休息复播或残留面板与覆盖层。
+  function resetRestUi() {
+    choosingNext = false;
+    restTargetAnnounced = false;
+    uiState.endSheetOpen = false;
+    uiState.discardDialogOpen = false;
+  }
+
+  // 记录是哪个「结束」入口打开了 Sheet：关闭后焦点回到同一个入口。
+  function endTriggerSelector(element) {
+    return element && element.getAttribute('data-role') === 'main-action'
+      ? '[data-role="main-action"]'
+      : '[data-role="end-trigger"]';
+  }
+
+  function dispatch(action) {
+    if (!action || typeof action.type !== 'string') return;
+    if (action.type === 'SET_THEME') {
+      const fromMenu = action.fromMenu === undefined ? themeMenuOpen : action.fromMenu;
+      state = Core.setTheme(state, action.theme);
+      storeTheme(state.theme);
+      themeMenuOpen = false;
+      // 弹层来源回到触发按钮；桌面演示栏来源回到对应主题按钮，避免重渲染后焦点丢失。
+      pendingFocus = fromMenu ? 'theme-trigger' : `#theme-switcher [data-theme-choice="${state.theme}"]`;
+      announce(`已切换到${THEME_LABELS[state.theme]}`);
+    } else if (action.type === 'OPEN_PREPARE') {
+      // 完成归档后今日仍保留「开始今日训练」入口；再次开始视为新一轮，
+      // 必须从干净的组状态出发，否则会带着上一轮的 completed/skipped 进入准备页。
+      if (state.sessionStatus === 'completed') {
+        state = { ...Core.createInitialState(Date.now()), theme: state.theme };
+        uiState.completedSummaryOpen = false;
+      }
+      state = Core.prepareWorkout(state);
+      themeMenuOpen = false;
+      pendingFocus = '#prepare-title';
+      announce('准备开始今日训练，可先确认本次安排');
+    } else if (action.type === 'BACK_TODAY') {
+      state = { ...state, screen: 'today', sessionStatus: 'idle' };
+      resetRestUi();
+      pendingFocus = '#today-title';
+      announce('已返回今日');
+    } else if (action.type === 'TOGGLE_EXERCISE') {
+      state = Core.toggleExercise(state, action.exerciseId);
+      pendingFocus = `[data-action="TOGGLE_EXERCISE"][data-exercise-id="${action.exerciseId}"]`;
+      const exercise = state.exercises.find(item => item.id === action.exerciseId);
+      announce(exercise ? `${exercise.name}已${exercise.collapsed ? '折叠' : '展开'}` : '');
+    } else if (action.type === 'START_WORKOUT') {
+      state = Core.startWorkout(state, Date.now());
+      themeMenuOpen = false;
+      editingSetId = null;
+      resetRestUi();
+      // 页面切换：焦点移到页面标题 h2，读屏先播报页面语境，再让用户 Tab 进入操作区。
+      pendingFocus = '#workout-title';
+      announce('训练已开始');
+    } else if (action.type === 'SELECT_SET') {
+      const target = currentSet(action.setId);
+      // 重复点击已选中的待训练组：无状态变化，不重建页面，保留当前焦点。
+      if (target && target.status === 'pending' && action.setId === state.selectedSetId) {
+        announce('该组已选中，可点击开始本组');
+        return;
+      }
+      const next = Core.selectSet(state, action.setId);
+      // 存在进行中组或目标不是待训练组时 core 返回同一引用，此时不重建页面。
+      if (next === state) {
+        announce('该组不可选择，请先完成或跳过当前组');
+        return;
+      }
+      state = next;
+      pendingFocus = `[data-action="SELECT_SET"][data-set-id="${action.setId}"]`;
+      announce('已选择该组，可点击开始本组');
+    } else if (action.type === 'START_SET') {
+      const next = Core.startSelectedSet(state, Date.now());
+      if (next === state) return;
+      state = next;
+      pendingFocus = '[data-role="main-action"]';
+      announce('本组已开始');
+    } else if (action.type === 'COMPLETE_SET') {
+      const next = Core.completeSelectedSet(state, Date.now());
+      if (next === state) return;
+      state = next;
+      editingSetId = null;
+      resetRestUi();
+      pendingFocus = '#rest-title';
+      announce('本组已完成，进入组间休息');
+    } else if (action.type === 'START_NEXT_SET') {
+      const next = Core.startNextSet(state, Date.now());
+      if (next === state) return;
+      state = next;
+      resetRestUi();
+      pendingFocus = '#workout-title';
+      announce('休息结束，开始下一组');
+    } else if (action.type === 'CHOOSE_NEXT_SET') {
+      const next = Core.chooseNextSet(state, action.setId, Date.now());
+      if (next === state) {
+        announce('该组当前不可选择');
+        return;
+      }
+      state = next;
+      resetRestUi();
+      pendingFocus = '#workout-title';
+      announce('已选择该组并开始训练');
+    } else if (action.type === 'TOGGLE_NEXT_PANEL') {
+      choosingNext = !choosingNext;
+      pendingFocus = choosingNext
+        ? '#rest-chooser .rest-chooser__item'
+        : '[data-action="TOGGLE_NEXT_PANEL"]';
+      announce(choosingNext ? '已展开其他未完成组，可直接选择开始' : '已收起选择面板');
+    } else if (action.type === 'JUMP_REST_TIMER') {
+      // 仅桌面演示控制：把休息起点前移到目标前 3 秒，用于验证达标反馈。
+      if (state.screen !== 'rest' || state.restStartedAt == null) return;
+      state = { ...state, restStartedAt: Date.now() - 87_000 };
+      announce('已跳至目标前 3 秒');
+    } else if (action.type === 'SKIP_SET') {
+      const next = Core.skipSelectedSet(state);
+      if (next === state) return;
+      state = next;
+      editingSetId = null;
+      pendingFocus = '[data-role="main-action"]';
+      announce('本组已跳过');
+    } else if (action.type === 'ADD_SET') {
+      if (!action.exerciseId) return;
+      // 先记住已有组 id，新增后据此找到真正的新组，避免复制 core 的序号推算逻辑。
+      const beforeIds = new Set(state.exercises.flatMap(item => item.sets).map(set => set.id));
+      state = Core.addTemporarySet(state, action.exerciseId);
+      const added = state.exercises.flatMap(item => item.sets).find(set => !beforeIds.has(set.id));
+      // 焦点落到新增组所在行：用户能立刻看到并进入刚添加的组，而不是被带到列表末尾的添加按钮。
+      pendingFocus = added ? `[data-set-row="${added.id}"] .workout-set__row` : '[data-action="ADD_SET"]';
+      announce('已添加一组临时训练');
+    } else if (action.type === 'EDIT_CURRENT') {
+      const selected = currentSet(state.selectedSetId);
+      if (!selected || !['pending', 'active'].includes(selected.status)) return;
+      editingSetId = editingSetId === selected.id ? null : selected.id;
+      pendingFocus = '[data-action="EDIT_CURRENT"]';
+      announce(editingSetId ? '可修改本组实际重量与次数' : '已收起数据编辑');
+    } else if (action.type === 'EDIT_SET') {
+      // 唯一的规范化编辑 action：非法值直接忽略，NaN 不会进入 core。
+      const value = sanitizeEditValue(action.value);
+      if (value === null || !action.setId || (action.field !== 'weight' && action.field !== 'reps')) return;
+      state = Core.editSet(state, action.setId, action.field === 'weight' ? { actualWeight: value } : { actualReps: value });
+      announce('已记录本次调整，仅本次生效');
+    } else if (action.type === 'OPEN_END_SHEET') {
+      // 只打开界面覆盖，不提前改变任何训练业务状态。
+      endSheetReturnFocus = action.returnFocus || '[data-role="end-trigger"]';
+      uiState.endSheetOpen = true;
+      uiState.discardDialogOpen = false;
+      pendingFocus = '#end-sheet-title';
+      announce('已打开结束训练确认');
+    } else if (action.type === 'CLOSE_END_SHEET') {
+      uiState.endSheetOpen = false;
+      uiState.discardDialogOpen = false;
+      pendingFocus = endSheetReturnFocus;
+      announce('继续训练');
+    } else if (action.type === 'SAVE_PARTIAL') {
+      // 二次确认打开时底层保存不可达：即便脚本直接派发也不能把「放弃」偷换成「保存」。
+      if (uiState.discardDialogOpen) return;
+      // 零完成组不应有任何副作用，即使被外部调用也保持原状态。
+      if (!Core.canSaveWorkout(state)) {
+        announce('至少完成一组后才能保存训练');
+        return;
+      }
+      state = Core.finishWorkout(state, Date.now());
+      editingSetId = null;
+      resetRestUi();
+      pendingFocus = '#summary-title';
+      announce('已保存本次训练，进入总结');
+    } else if (action.type === 'OPEN_DISCARD_CONFIRM') {
+      uiState.discardDialogOpen = true;
+      pendingFocus = '[data-role="discard-cancel"]';
+      announce('请确认是否放弃本次训练');
+    } else if (action.type === 'CLOSE_DISCARD_CONFIRM') {
+      uiState.discardDialogOpen = false;
+      pendingFocus = '[data-action="OPEN_DISCARD_CONFIRM"]';
+      announce('已返回结束训练确认');
+    } else if (action.type === 'CONFIRM_DISCARD') {
+      state = Core.discardWorkout(state);
+      themeMenuOpen = false;
+      editingSetId = null;
+      resetRestUi();
+      uiState.completedSummaryOpen = false;
+      pendingFocus = '#today-title';
+      announce('已放弃本次训练');
+    } else if (action.type === 'SET_NOTES') {
+      // 备注走局部更新：只回写状态与字数，不整页重建，避免输入过程中丢焦点。
+      state = Core.setNotes(state, action.notes);
+      const counter = screenRoot.querySelector('[data-role="notes-count"]');
+      if (counter) counter.textContent = `${state.notes.length} / 300`;
+      return;
+    } else if (action.type === 'COMPLETE_SESSION') {
+      const next = Core.completeSession(state);
+      if (next === state) return;
+      state = next;
+      uiState.completedSummaryOpen = false;
+      pendingFocus = '#today-title';
+      announce('训练已完成，已记为今日完成');
+    } else if (action.type === 'TOGGLE_SUMMARY_VIEW') {
+      uiState.completedSummaryOpen = !uiState.completedSummaryOpen;
+      pendingFocus = '[data-action="TOGGLE_SUMMARY_VIEW"]';
+      announce(uiState.completedSummaryOpen ? '已展开本次训练总结' : '已收起本次训练总结');
+    } else if (action.type === 'RESET_DEMO') {
+      state = { ...Core.createInitialState(Date.now()), theme: state.theme };
+      themeMenuOpen = false;
+      editingSetId = null;
+      resetRestUi();
+      uiState.completedSummaryOpen = false;
+      announce('已重置演示数据');
+    }
+    render();
+  }
+
+  document.addEventListener('click', event => {
+    const choice = event.target.closest('[data-theme-choice]');
+    if (choice) {
+      // 桌面演示栏按钮与移动端弹层按钮共用同一 action：区分来源以决定关闭后的焦点落点。
+      dispatch({
+        type: 'SET_THEME',
+        theme: choice.getAttribute('data-theme-choice'),
+        fromMenu: !!choice.closest('#theme-menu')
+      });
+      return;
+    }
+    const action = event.target.closest('[data-action]');
+    if (action) {
+      const type = action.getAttribute('data-action');
+      const exerciseId = action.getAttribute('data-exercise-id');
+      const setId = action.getAttribute('data-set-id');
+      dispatch({
+        type,
+        ...(type === 'OPEN_END_SHEET' ? { returnFocus: endTriggerSelector(action) } : {}),
+        ...(exerciseId ? { exerciseId } : {}),
+        ...(setId ? { setId } : {})
+      });
+      return;
+    }
+    const ui = event.target.closest('[data-ui]');
+    if (ui && ui.getAttribute('data-ui') === 'toggle-theme-menu') {
+      themeMenuOpen = !themeMenuOpen;
+      pendingFocus = themeMenuOpen ? 'theme-option' : 'theme-trigger';
+      render();
+      return;
+    }
+    if (themeMenuOpen) {
+      themeMenuOpen = false;
+      render();
+    }
+  });
+
+  document.addEventListener('change', event => {
+    const input = event.target.closest('[data-field][data-set-id]');
+    if (input) commitSetEdit(input);
+  });
+
+  // 备注输入逐字回写状态，但只做局部同步，不触发整页重建。
+  document.addEventListener('input', event => {
+    const notes = event.target.closest('[data-role="notes"]');
+    if (notes) dispatch({ type: 'SET_NOTES', notes: notes.value });
+  });
+
+  const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+  // 通用 Tab 焦点陷阱：把焦点困在给定容器内双向回绕。
+  // - 容器不存在或无可见 focusable 时安全返回，不劫持 Tab；
+  // - 焦点已逃出容器（activeElement 不在列表）时，下一个 Tab 拉回容器首/末。
+  function trapTabWithin(containerSelector, event) {
+    const scope = screenRoot.querySelector(containerSelector);
+    if (!scope) return;
+    const focusables = Array.from(scope.querySelectorAll(FOCUSABLE_SELECTOR))
+      .filter(el => !el.hidden && el.getClientRects().length > 0);
+    if (!focusables.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const index = focusables.indexOf(document.activeElement);
+    if (event.shiftKey) {
+      if (index <= 0) {
+        event.preventDefault();
+        last.focus();
+      }
+    } else if (index === -1 || index === focusables.length - 1) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  document.addEventListener('keydown', event => {
+    // Escape 顶层规则：有二次确认先关确认，其次关 Sheet，最后才关主题菜单。
+    if (event.key === 'Escape') {
+      if (uiState.discardDialogOpen) {
+        dispatch({ type: 'CLOSE_DISCARD_CONFIRM' });
+        return;
+      }
+      if (uiState.endSheetOpen) {
+        dispatch({ type: 'CLOSE_END_SHEET' });
+        return;
+      }
+      if (themeMenuOpen) {
+        themeMenuOpen = false;
+        pendingFocus = 'theme-trigger';
+        render();
+        return;
+      }
+    }
+    // 焦点陷阱：Tab/Shift+Tab 必须困在最上层覆盖层内（二次确认优先于结束 Sheet），
+    // 背景已 inert，所以这里只需要处理覆盖层内部的回绕与「焦点逃出容器」两种情况。
+    // 容器内没有任何可聚焦元素时安全返回，不抛错也不劫持 Tab。
+    if (event.key === 'Tab') {
+      if (uiState.discardDialogOpen) {
+        trapTabWithin('#discard-dialog', event);
+      } else if (uiState.endSheetOpen) {
+        trapTabWithin('#end-sheet', event);
+      }
+    }
+    // 回车提交当前编辑，与失焦提交走同一条安全路径。
+    if (event.key === 'Enter') {
+      const input = event.target.closest('[data-field][data-set-id]');
+      if (input) {
+        event.preventDefault();
+        commitSetEdit(input);
+      }
+    }
+  });
+
+  // 休息页局部刷新：更新环形几何、aria-label、累计/剩余/超时文本，并只播报一次达标反馈。
+  // 全程只改属性与文本，不重建页面、不重播动画。
+  function updateRestRegions(timers) {
+    const ring = screenRoot.querySelector('[data-role="rest-ring"]');
+    if (!ring) return;
+    const reached = restReached(timers);
+    ring.setAttribute('data-state', reached ? 'reached' : 'pending');
+    ring.setAttribute('aria-label', buildRestRingLabel(timers));
+    const progress = ring.querySelector('[data-role="rest-ring-progress"]');
+    if (progress) progress.setAttribute('stroke-dashoffset', restRingOffset(timers).toFixed(2));
+    const timer = ring.querySelector('[data-role="rest-timer"]');
+    if (timer) timer.textContent = Core.formatDuration(timers.restSeconds);
+    const status = screenRoot.querySelector('[data-role="rest-state"]');
+    if (status) status.textContent = restStatusText(timers);
+    if (reached && !restTargetAnnounced) {
+      restTargetAnnounced = true;
+      ring.classList.add('rest-ring--celebrate');
+      announce('已达到目标休息时间');
+    }
+  }
+
+  // 250ms 界面刷新：只在执行/休息阶段更新计时文本与轨道，不重建页面、不动输入焦点。
+  // 全局仅注册一次，节点在 render 后重新生成，找不到就跳过。
+  function refreshLiveRegions() {
+    if (!['active', 'resting'].includes(state.sessionStatus)) return;
+    const timers = Core.deriveTimers(state, Date.now());
+    const workoutTimer = screenRoot.querySelector('[data-role="workout-timer"]');
+    if (workoutTimer) workoutTimer.textContent = Core.formatDuration(timers.workoutSeconds);
+    const setTimer = screenRoot.querySelector('[data-role="set-timer"]');
+    if (setTimer) setTimer.textContent = Core.formatDuration(timers.setSeconds);
+    if (state.screen === 'rest') updateRestRegions(timers);
+    const track = screenRoot.querySelector('[data-role="rhythm-track"]');
+    if (track) track.setAttribute('aria-label', buildTrackLabel(Core.getWorkoutStats(state)));
+  }
+
+  setInterval(refreshLiveRegions, 250);
+
+  window.FitnessPrototype = {
+    getState: () => state,
+    dispatch,
+    render
+  };
+
+  render();
+})();
+  </script>
+</body>
+</html>

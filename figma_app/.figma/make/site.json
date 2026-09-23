@@ -1,0 +1,10 @@
+{
+  "description": "Tracks workouts with customizable themes and real-time flow control to optimize fitness routines and enhance user engagement.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

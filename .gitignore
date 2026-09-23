@@ -1,0 +1,32 @@
+.vs/
+.idea/
+.codebuddy/
+
+# Local agent and workspace state
+.agent/
+.agents/
+.codex/
+.worktrees/
+skills-lock.json
+
+# Generated dependencies, caches, reports, and build outputs
+**/node_modules/
+**/.dart_tool/
+**/.gradle/
+**/.kotlin/
+**/build/
+**/dist/
+**/coverage/
+**/test/**/failures/
+*.apk
+*.aab
+*.class
+*.log
+
+# Local configuration and signing material
+**/.env
+**/.env.*
+**/local.properties
+**/key.properties
+**/*.jks
+**/*.keystore
